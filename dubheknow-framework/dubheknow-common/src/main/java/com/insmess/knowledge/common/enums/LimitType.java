@@ -1,0 +1,20 @@
+package com.insmess.knowledge.common.enums;
+
+/**
+ * 限流类型
+ *
+ * @author insmess
+ */
+
+public enum LimitType
+{
+    /**
+     * 默认策略全局限流
+     */
+    DEFAULT,
+
+    /**
+     * 根据请求者IP进行限流
+     */
+    IP
+}

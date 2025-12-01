@@ -1,0 +1,160 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.insmess.knowledge</groupId>
+        <artifactId>dubheknow-module-graph</artifactId>
+        <version>${revision}</version>
+    </parent>
+    <artifactId>dubheknow-module-graph-biz</artifactId>
+    <packaging>jar</packaging>
+    <dependencies>
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-module-graph-api</artifactId>
+        </dependency>
+
+        <!-- 核心模块 config-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-config</artifactId>
+        </dependency>
+
+        <!-- 系統模块 websocket-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-websocket</artifactId>
+        </dependency>
+
+        <!-- 系统模块 dubheknow-security -->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-security</artifactId>
+        </dependency>
+
+        <!-- 系统模块 mybatis -->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-mybatis</artifactId>
+        </dependency>
+
+
+
+        <!-- 系统模块 redis -->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-redis</artifactId>
+        </dependency>
+
+        <!-- 通用工具-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-common</artifactId>
+        </dependency>
+
+        <!-- 文件上传-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-file</artifactId>
+        </dependency>
+
+        <!-- langchain-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-langchain4j</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- 服务器开发需要的jar包 -->
+        <!--   从 .doc 文件中获取文字     -->
+        <!-- Apache POI for DOC处理 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-scratchpad</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.6</version>
+        </dependency>
+
+        <!--   从 .docx 文件中获取文字     -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version> <!-- 请检查最新版本 -->
+        </dependency>
+
+        <!--   从 .pdf 文件中获取文字     -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>2.0.27</version> <!-- 请检查最新版本 -->
+        </dependency>
+
+
+        <!-- 词典 NER：Aho-Corasick 多模式匹配 -->
+        <dependency>
+            <groupId>org.ahocorasick</groupId>
+            <artifactId>ahocorasick</artifactId>
+            <version>0.4.0</version>
+        </dependency>
+
+        <!-- MapStruct（运行时 API，编译时需要 processor） -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.6.3</version>
+        </dependency>
+
+        <!-- Lombok（如使用，编译期注解处理） -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.36</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>21</release>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>1.6.3</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.36</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

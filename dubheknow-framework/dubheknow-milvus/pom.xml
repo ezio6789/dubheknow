@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.insmess.knowledge</groupId>
+        <artifactId>dubheknow-framework</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <properties>
+    </properties>
+
+    <artifactId>dubheknow-milvus</artifactId>
+
+    <dependencies>
+        <!-- Milvus Java SDK -->
+        <dependency>
+            <groupId>io.milvus</groupId>
+            <artifactId>milvus-sdk-java</artifactId>
+            <version>2.6.6</version>
+        </dependency>
+        <dependency>
+            <groupId>io.milvus</groupId>
+            <artifactId>milvus-sdk-java-bulkwriter</artifactId>
+            <version>2.6.6</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-langchain4j</artifactId>
+        </dependency>
+
+        <!-- Milvus Vector Store -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-milvus</artifactId>
+            <version>1.7.1-beta14</version>
+        </dependency>
+    </dependencies>
+</project>

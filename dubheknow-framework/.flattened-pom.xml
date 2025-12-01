@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.insmess.knowledge</groupId>
+    <artifactId>dubheknow</artifactId>
+    <version>1.0.0</version>
+  </parent>
+  <groupId>com.insmess.knowledge</groupId>
+  <artifactId>dubheknow-framework</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <modules>
+    <module>dubheknow-common</module>
+    <module>dubheknow-config</module>
+    <module>dubheknow-security</module>
+    <module>dubheknow-redis</module>
+    <module>dubheknow-generator</module>
+    <module>dubheknow-mybatis</module>
+    <module>dubheknow-auth</module>
+    <module>dubheknow-file</module>
+    <module>dubheknow-neo4j</module>
+    <module>dubheknow-quartz</module>
+    <module>dubheknow-websocket</module>
+    <module>dubheknow-langchain4j</module>
+    <module>dubheknow-milvus</module>
+  </modules>
+</project>

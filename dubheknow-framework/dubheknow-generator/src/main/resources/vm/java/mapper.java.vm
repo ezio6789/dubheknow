@@ -1,0 +1,17 @@
+package ${packageName}.dao.mapper.${moduleName};
+
+import ${packageName}.dao.po.${moduleName}.${ClassName}PO;
+import com.github.yulichang.base.MPJBaseMapper;
+#if($table.sub)
+import ${packageName}.domain.${subClassName};
+#end
+
+/**
+ * ${functionName}Mapper接口
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+public interface ${ClassName}Mapper extends MPJBaseMapper<${ClassName}PO> {
+
+}

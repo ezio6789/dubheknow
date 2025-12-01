@@ -1,0 +1,231 @@
+package ${packageName}.service.${moduleName}.impl;
+
+    #foreach ($column in $columns)
+#if($column.javaField == 'createTime' || $column.javaField == 'updateTime')
+    #break
+#end
+#end
+import java.util.Collection;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import com.insmess.knowledge.mybatis.core.query.LambdaQueryWrapperX;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.Resource;
+import com.insmess.knowledge.common.utils.object.BeanUtils;
+import com.insmess.knowledge.common.utils.StringUtils;
+import com.insmess.knowledge.common.exception.ServiceException;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import ${packageName}.convert.${moduleName}.${ClassName}Convert;
+import ${packageName}.vo.${moduleName}.${ClassName}PageReqVO;
+import ${packageName}.vo.${moduleName}.${ClassName}RespVO;
+import ${packageName}.vo.${moduleName}.${ClassName}SaveReqVO;
+#if($table.sub)
+import ${packageName}.domain.${subClassName};
+#end
+import ${packageName}.dao.po.${moduleName}.${ClassName}PO;
+import ${packageName}.dao.mapper.${moduleName}.${ClassName}Mapper;
+import ${packageName}.service.${moduleName}.${ClassName}Service;
+#if($table.sub)
+#elseif($table.tree)
+#end
+/**
+ * ${functionName}Service业务层处理
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+@Slf4j
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class ${ClassName}ServiceImpl  extends ServiceImpl<${ClassName}Mapper,${ClassName}PO> implements ${ClassName}Service {
+    @Resource
+    private ${ClassName}Mapper ${className}Mapper;
+
+    @Override
+    public Page<${ClassName}PO> page${ClassName}(${ClassName}PageReqVO pageReqVO) {
+        LambdaQueryWrapperX<${ClassName}PO> wrapper = queryCondition(pageReqVO);
+        //设置分页
+        Page<${ClassName}PO> page = new Page<>(pageReqVO.getPageNum(), pageReqVO.getPageSize());
+        return ${className}Mapper.selectPage(page, wrapper);
+    }
+
+    @Override
+    public Long save${ClassName}(${ClassName}SaveReqVO saveReqVO) {
+        ${ClassName}PO ${className}PO = ${ClassName}Convert.INSTANCE.convertToPO(saveReqVO);
+        ${className}Mapper.insert(${className}PO);
+        return ${className}PO.getId();
+    }
+
+    @Override
+    public int update${ClassName}(${ClassName}SaveReqVO updateReqVO) {
+        ${ClassName}PO updateObj = ${ClassName}Convert.INSTANCE.convertToPO(updateReqVO);
+        return ${className}Mapper.updateById(updateObj);
+    }
+    #if($table.crud || $table.sub)
+    @Override
+    public int remove${ClassName}(Collection<Long> idList) {
+        return ${className}Mapper.deleteBatchIds(idList);
+    }
+    #elseif($table.tree)
+    @Override
+    public int remove${ClassName}(Long id) {
+        return ${className}Mapper.deleteById(id);
+    }
+    #end
+
+    @Override
+    public ${ClassName}PO get${ClassName}ById(Long id) {
+        return ${className}Mapper.selectById(id);
+    }
+
+    @Override
+    public List<${ClassName}PO> list${ClassName}() {
+        return ${className}Mapper.selectList(null);
+    }
+
+    @Override
+    public Map<Long, ${ClassName}PO> map${ClassName}() {
+        List<${ClassName}PO> ${className}List = ${className}Mapper.selectList(null);
+        return ${className}List.stream()
+                .collect(Collectors.toMap(
+                        ${ClassName}PO::getId,
+                        ${className}PO -> ${className}PO,
+                        // 保留已存在的值
+                        (existing, replacement) -> existing
+                ));
+    }
+
+    #if($table.tree)
+    @Override
+    public boolean hasChildBy${ClassName}Id(Long id) {
+        return ${className}Mapper.selectCount(${ClassName}PO::getParentId, id) > 0;
+    }
+    #end
+
+    #if($table.crud || $table.sub)
+        /**
+         * 导入${functionName}数据
+         *
+         * @param importExcelList ${functionName}数据列表
+         * @param isUpdateSupport 是否更新支持，如果已存在，则进行更新数据
+         * @param operName 操作用户
+         * @return 结果
+         */
+        @Override
+        public String import${ClassName}(List<${ClassName}RespVO> importExcelList, boolean isUpdateSupport, String operName) {
+            if (StringUtils.isNull(importExcelList) || importExcelList.size() == 0) {
+                throw new ServiceException("导入数据不能为空！");
+            }
+
+            int successNum = 0;
+            int failureNum = 0;
+            List<String> successMessages = new ArrayList<>();
+            List<String> failureMessages = new ArrayList<>();
+
+            for (${ClassName}RespVO respVO : importExcelList) {
+                try {
+                    ${ClassName}PO ${className}PO = BeanUtils.toBean(respVO, ${ClassName}PO.class);
+                    Long ${className}Id = respVO.getId();
+                    if (isUpdateSupport) {
+                        if (${className}Id != null) {
+                            ${ClassName}PO existing${ClassName} = ${className}Mapper.selectById(${className}Id);
+                            if (existing${ClassName} != null) {
+                                ${className}Mapper.updateById(${className}PO);
+                                successNum++;
+                                successMessages.add("数据更新成功，ID为 " + ${className}Id + " 的${functionName}记录。");
+                            } else {
+                                failureNum++;
+                                failureMessages.add("数据更新失败，ID为 " + ${className}Id + " 的${functionName}记录不存在。");
+                            }
+                        } else {
+                            failureNum++;
+                            failureMessages.add("数据更新失败，某条记录的ID不存在。");
+                        }
+                    } else {
+                        QueryWrapper<${ClassName}PO> queryWrapper = new QueryWrapper<>();
+                        queryWrapper.eq("id", ${className}Id);
+                        ${ClassName}PO existing${ClassName} = ${className}Mapper.selectOne(queryWrapper);
+                        if (existing${ClassName} == null) {
+                            ${className}Mapper.insert(${className}PO);
+                            successNum++;
+                            successMessages.add("数据插入成功，ID为 " + ${className}Id + " 的${functionName}记录。");
+                        } else {
+                            failureNum++;
+                            failureMessages.add("数据插入失败，ID为 " + ${className}Id + " 的${functionName}记录已存在。");
+                        }
+                    }
+                } catch (Exception e) {
+                    failureNum++;
+                    String errorMsg = "数据导入失败，错误信息：" + e.getMessage();
+                    failureMessages.add(errorMsg);
+                    log.error(errorMsg, e);
+                }
+            }
+            StringBuilder resultMsg = new StringBuilder();
+            if (failureNum > 0) {
+                resultMsg.append("很抱歉，导入失败！共 ").append(failureNum).append(" 条数据格式不正确，错误如下：");
+                resultMsg.append("<br/>").append(String.join("<br/>", failureMessages));
+                throw new ServiceException(resultMsg.toString());
+            } else {
+                resultMsg.append("恭喜您，数据已全部导入成功！共 ").append(successNum).append(" 条。");
+            }
+            return resultMsg.toString();
+        }
+    #end
+
+    private LambdaQueryWrapperX<${ClassName}PO> queryCondition(${ClassName}PageReqVO pageReqVO) {
+        ${ClassName}PO ${className}PO = ${ClassName}Convert.INSTANCE.convertToPO(pageReqVO);
+        return new LambdaQueryWrapperX<${ClassName}PO>()
+            #foreach($column in $columns)
+                #if($column.htmlType == "datetime" && $column.queryType == "BETWEEN")
+                    #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                .betweenIfPresent(${ClassName}PO::get${AttrName}, ${className}PO.getParamByKey("begin${AttrName}"), ${className}PO.getParamByKey("end${AttrName}"))
+                #end
+                #if($column.query && $column.queryType == "EQ")
+                    #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                .eqIfPresent(${ClassName}PO::get${AttrName}, ${className}PO.get${AttrName}())
+                #end
+                #if($column.query && $column.queryType == "LIKE")
+                    #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                .likeIfPresent(${ClassName}PO::get${AttrName}, ${className}PO.get${AttrName}())
+                #end
+                #if($column.query && $column.queryType == "NE")
+                    #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                .neIfPresent(${ClassName}PO::get${AttrName}, ${className}PO.get${AttrName}())
+                #end
+                #if($column.query && $column.queryType == "NE")
+                    #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                .neIfPresent(${ClassName}PO::get${AttrName}, ${className}PO.get${AttrName}())
+                #end
+                #if($column.query && $column.queryType == "GT")
+                    #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                .gtIfPresent(${ClassName}PO::get${AttrName}, ${className}PO.get${AttrName}())
+                #end
+                #if($column.query && $column.queryType == "GT")
+                    #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                .gtIfPresent(${ClassName}PO::get${AttrName}, ${className}PO.get${AttrName}())
+                #end
+                #if($column.query && $column.queryType == "GTE")
+                    #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                .geIfPresent(${ClassName}PO::get${AttrName}, ${className}PO.get${AttrName}())
+                #end
+                #if($column.query && $column.queryType == "LT")
+                    #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                .ltIfPresent(${ClassName}PO::get${AttrName}, ${className}PO.get${AttrName}())
+                #end
+                #if($column.query && $column.queryType == "LTE")
+                    #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                .leIfPresent(${ClassName}PO::get${AttrName}, ${className}PO.get${AttrName}())
+                #end
+            #end
+                .orderByAsc(${ClassName}PO::getCreateTime);
+    }
+
+}

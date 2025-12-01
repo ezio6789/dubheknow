@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.insmess.knowledge</groupId>
+    <artifactId>dubheknow-framework</artifactId>
+    <version>1.0.0</version>
+  </parent>
+  <groupId>com.insmess.knowledge</groupId>
+  <artifactId>dubheknow-redis</artifactId>
+  <version>1.0.0</version>
+  <description>dubheknow-redis框架核心</description>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.alibaba.fastjson2</groupId>
+      <artifactId>fastjson2</artifactId>
+    </dependency>
+  </dependencies>
+</project>

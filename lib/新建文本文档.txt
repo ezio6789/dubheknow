@@ -1,0 +1,2 @@
+mvn install:install-file -Dfile=aspose-words-15.8.0-jdk16.jar -DgroupId=com.aspose-words -DartifactId=aspose-words-java -Dversion=15.8.0 -Dpackaging=jar
+mvn install:install-file -Dfile=aspose-cells-21.8.cracked.jar -DgroupId=com.aspose-cells -DartifactId=aspose-cells-java -Dversion=21.8 -Dpackaging=jar

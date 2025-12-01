@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.insmess.knowledge</groupId>
+    <artifactId>dubheknow</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>dubheknow-framework</module>
+        <module>dubheknow-module-system</module>
+        <module>dubheknow-server</module>
+        <module>dubheknow-module-graph</module>
+    </modules>
+
+    <properties>
+        <java.version>21</java.version>
+        <revision>1.0.0</revision>
+        <spring-boot.version>3.4.7</spring-boot.version>
+        <!-- 你原有的版本（保留/按需调整） -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+
+        <!-- 第三方库版本：可逐步升级到对 Jakarta 友好的版本 -->
+        <druid.version>1.2.23</druid.version>       <!-- 若用 Boot 3，优先切换 artifactId: druid-spring-boot-3-starter（见下方依赖注释） -->
+        <bitwalker.version>1.21</bitwalker.version>
+        <kaptcha.version>2.3.3</kaptcha.version>    <!-- 可能依赖 javax，若在 Boot 3 有冲突需换支持 Jakarta 的分支/替代 -->
+        <pagehelper.boot.version>2.1.1</pagehelper.boot.version>
+        <fastjson.version>2.0.43</fastjson.version>
+        <oshi.version>6.6.1</oshi.version>
+        <commons.io.version>2.13.0</commons.io.version>
+        <poi.version>5.2.3</poi.version>
+        <velocity.version>2.3</velocity.version>
+        <servlet.version>6.1.0</servlet.version>
+
+        <!-- 替换旧版 jjwt:0.9.1（javax）为 0.11.x 三件套（Jakarta 友好） -->
+        <jjwt.version>0.11.5</jjwt.version>
+    </properties>
+
+    <!-- 依赖版本统一由 Spring Boot BOM 管理 -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- 图谱模块 -->
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-graph-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-graph-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-auth</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-common</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-config</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-es</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-file</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-generator</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-mybatis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-neo4j</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-quartz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-redis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-security</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-websocket</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-langchain4j</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-system-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-system-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-kmc-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-kmc-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-ext-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-ext-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-app-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-app-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-dm-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-dm-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!--=========================================-->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- 你原来在 dependencyManagement 中声明版本的三方库（保留） -->
+            <!-- 阿里数据库连接池（Boot 3 建议使用 druid-spring-boot-3-starter，见下方依赖处注释） -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid-spring-boot-starter</artifactId>
+                <version>${druid.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>eu.bitwalker</groupId>
+                <artifactId>UserAgentUtils</artifactId>
+                <version>${bitwalker.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.pagehelper</groupId>
+                <artifactId>pagehelper-spring-boot-starter</artifactId>
+                <version>${pagehelper.boot.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.oshi</groupId>
+                <artifactId>oshi-core</artifactId>
+                <version>${oshi.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons.io.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.velocity</groupId>
+                <artifactId>velocity-engine-core</artifactId>
+                <version>${velocity.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>${fastjson.version}</version>
+            </dependency>
+
+            <!-- jjwt 新版三件套（替代旧版 io.jsonwebtoken:jjwt:0.9.1） -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>pro.fessional</groupId>
+                <artifactId>kaptcha</artifactId>
+                <version>${kaptcha.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.servlet</groupId>
+                <artifactId>jakarta.servlet-api</artifactId>
+                <version>${servlet.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <!-- 统一 Java 版本到 21 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+            <!-- 用 flatten-maven-plugin 自动替换 ${revision} -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.5.0</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+<!--    <repositories>-->
+<!--        <repository>-->
+<!--            <id>aliyun-public</id>-->
+<!--            <name>aliyun nexus</name>-->
+<!--            <url>https://maven.aliyun.com/repository/public</url>-->
+<!--            <releases><enabled>true</enabled></releases>-->
+<!--        </repository>-->
+<!--        <repository>-->
+<!--            <id>central</id>-->
+<!--            <name>maven central</name>-->
+<!--            <url>https://repo1.maven.org/maven2/</url>-->
+<!--            <releases><enabled>true</enabled></releases>-->
+<!--        </repository>-->
+<!--    </repositories>-->
+
+<!--    <pluginRepositories>-->
+<!--        <pluginRepository>-->
+<!--            <id>public</id>-->
+<!--            <name>aliyun nexus</name>-->
+<!--            <url>https://maven.aliyun.com/repository/public</url>-->
+<!--            <releases><enabled>true</enabled></releases>-->
+<!--            <snapshots><enabled>false</enabled></snapshots>-->
+<!--        </pluginRepository>-->
+
+<!--        <pluginRepository>-->
+<!--            <id>fit2cloud</id>-->
+<!--            <name>fit2cloud</name>-->
+<!--            <url>https://repository.fit2cloud.com/content/groups/public/</url>-->
+<!--            <releases><enabled>true</enabled></releases>-->
+<!--            <snapshots><enabled>false</enabled></snapshots>-->
+<!--        </pluginRepository>-->
+<!--    </pluginRepositories>-->
+
+
+
+</project>

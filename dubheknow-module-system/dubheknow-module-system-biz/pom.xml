@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.insmess.knowledge</groupId>
+        <artifactId>dubheknow-module-system</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>dubheknow-module-system-biz</artifactId>
+
+    <dependencies>
+        <!-- 核心模块 config-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-config</artifactId>
+        </dependency>
+
+        <!-- 系統模块 websocket-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-websocket</artifactId>
+        </dependency>
+
+        <!-- 系统模块 dubheknow-security -->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-security</artifactId>
+        </dependency>
+
+        <!-- 系统模块 mybatis -->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-mybatis</artifactId>
+        </dependency>
+
+        <!-- 系统模块 redis -->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-redis</artifactId>
+        </dependency>
+        <!-- ======================================================================== -->
+        <!-- system-api模块 -->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-module-system-api</artifactId>
+        </dependency>
+
+        <!-- 定时任务-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-quartz</artifactId>
+        </dependency>
+
+        <!-- 代码生成-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-generator</artifactId>
+        </dependency>
+
+        <!-- 通用工具-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-common</artifactId>
+        </dependency>
+
+        <!-- 文件上传-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-file</artifactId>
+        </dependency>
+
+        <!-- pay-->
+        <!--        <dependency>
+                    <groupId>com.insmess.knowledge</groupId>
+                    <artifactId>dubheknow-pay</artifactId>
+                    <version>3.8.8</version>
+                </dependency>-->
+
+        <!-- auth-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-auth</artifactId>
+        </dependency>
+
+        <!-- swagger3-->
+        <!--        <dependency>
+                    <groupId>io.springfox</groupId>
+                    <artifactId>springfox-boot-starter</artifactId>
+                </dependency>-->
+
+        <!-- 防止进入swagger页面报类型转换错误，排除3.0.0中的引用，手动增加1.6.2版本 -->
+        <!--        <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-models</artifactId>
+                    <version>1.6.2</version>
+                </dependency>-->
+
+        <!-- MapStruct API（运行期需要） -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.6.3</version>
+        </dependency>
+
+        <!-- 如项目使用 Lombok（建议 provided） -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.36</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>21</release>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>1.6.3</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.36</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
