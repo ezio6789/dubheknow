@@ -22,5 +22,6 @@ public class DubheKnowApplication
     {
         // System.setProperty("spring.devtools.restart.enabled", "false");
         SpringApplication.run(DubheKnowApplication.class, args);
+        System.out.println("(♥◠‿◠)ﾉﾞ  knowledge启动成功   ლ(´ڡ`ლ)ﾞ  \n");
     }
 }
