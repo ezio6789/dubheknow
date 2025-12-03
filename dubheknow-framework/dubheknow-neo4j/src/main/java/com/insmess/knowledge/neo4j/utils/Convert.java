@@ -5,10 +5,6 @@ import com.alibaba.fastjson2.JSONObject;
 import com.insmess.knowledge.neo4j.domain.DynamicEntity;
 import com.insmess.knowledge.neo4j.domain.relationship.DynamicEntityRelationship;
 import org.neo4j.driver.Value;
-import org.neo4j.driver.internal.value.BooleanValue;
-import org.neo4j.driver.internal.value.FloatValue;
-import org.neo4j.driver.internal.value.IntegerValue;
-import org.neo4j.driver.internal.value.StringValue;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -31,16 +27,19 @@ public class Convert {
         if (value == null || value.isNull()) {
             return null;
         }
-        if (value instanceof StringValue) {
-            return value.asString();
-        } else if (value instanceof IntegerValue) {
-            return value.asNumber();
-        } else if (value instanceof FloatValue) {
-            return value.asDouble();
-        } else if (value instanceof BooleanValue) {
-            return value.asBoolean();
-        } else {
-            return value.asObject();
+        String typeName = value.type().name();
+        switch (typeName) {
+            case "STRING":
+                return value.asString();
+            case "INTEGER":
+                return value.asNumber();
+            case "FLOAT":
+            case "DOUBLE":
+                return value.asDouble();
+            case "BOOLEAN":
+                return value.asBoolean();
+            default:
+                return value.asObject();
         }
     }
 

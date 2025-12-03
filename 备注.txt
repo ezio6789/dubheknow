@@ -1,0 +1,9 @@
+docker run -d \
+  --name neo4j5 \
+  --restart always \
+  -p 57474:7474 -p 57687:7687 \
+  -e NEO4J_AUTH=neo4j/123456 \
+  -e NEO4J_PLUGINS='["apoc"]' \
+  -v $PWD/neo4j/data:/data \
+  -v $PWD/neo4j/plugins:/plugins \
+  neo4j:5.26.17

@@ -476,11 +476,17 @@ import {
   getExtSchemaTree,
   getExtSchemaGraph,
 } from "@/api/graph/ontology/schema.js";
+import {
+  listSchemaRelation,
+  getSchemaRelation,
+  delSchemaRelation,
+  addSchemaRelation,
+  updateSchemaRelation,
+} from "@/api/graph/ontology/schemaRelation";
 import { listSchema } from "@/api/graph/ontology/schema";
 import { getToken } from "@/utils/auth.js";
 import moment from "moment";
 import { useRoute } from "vue-router";
-import { listSchemaRelation } from "@/api/graph/ontology/schemaRelation";
 import { radioEmits } from "element-plus";
 const route = useRoute();
 const { proxy } = getCurrentInstance();
@@ -599,7 +605,7 @@ function getList(id) {
   //     loading.value = false;
   //   });
   listSchemaRelation({ startEndId: id }).then((response) => {
-    relationList.value = response.data.rows;
+    relationList.value = response.data.records;
     total.value = response.data.total;
     loading.value = false;
   });
@@ -633,12 +639,16 @@ watch(
 
 /** 查询概念全部数据 */
 function getAllList() {
-  listSchema().then((response) => {
-    console.log(response.data.records, "response.data");
+  listSchema({
+    pageNum: 1,
+    pageSize: 1000,
+    knowledgeId: knowledgeId.value,
+  }).then((response) => {
     selectOptions.value = response.data.records.map((item) => ({
       value: item.id,
       label: item.name,
     }));
+    console.log(selectOptions.value, "response.data");
   });
 }
 
@@ -724,7 +734,7 @@ function changeStartEnd(start = null, end = null) {
 function handleUpdate(row) {
   reset();
   const _id = row.id || ids.value;
-  getRelation(_id).then((response) => {
+  getSchemaRelation(_id).then((response) => {
     form.value = response.data;
     open.value = true;
     title.value = "修改关系配置";
@@ -735,7 +745,7 @@ function handleUpdate(row) {
 function handleDetail(row) {
   reset();
   const _id = row.id || ids.value;
-  getRelation(_id).then((response) => {
+  getSchemaRelation(_id).then((response) => {
     form.value = response.data;
     openDetail.value = true;
     title.value = "关系配置详情";
@@ -759,7 +769,7 @@ function submitForm() {
         );
       }
       if (form.value.id != null) {
-        updateRelation(form.value)
+        updateSchemaRelation(form.value)
             .then((response) => {
               proxy.$modal.msgSuccess("修改成功");
               open.value = false;
@@ -767,7 +777,7 @@ function submitForm() {
             })
             .catch((error) => {});
       } else {
-        addRelation(form.value)
+        addSchemaRelation(form.value)
             .then((response) => {
               proxy.$modal.msgSuccess("新增成功");
               open.value = false;
@@ -785,7 +795,7 @@ function handleDelete(row) {
   proxy.$modal
       .confirm('是否确认删除关系配置编号为"' + _ids + '"的数据项？')
       .then(function () {
-        return delRelation(_ids);
+        return delSchemaRelation(_ids);
       })
       .then(() => {
         getList(props.nodeData?.id);
@@ -865,8 +875,10 @@ function routeTo(link, row) {
     }
   }
 }
+onMounted(() => {
+  getAllList();
+});
 
-getAllList();
 // getList();
 
 </script>

@@ -19,6 +19,12 @@
             <artifactId>dubheknow-module-system-biz</artifactId>
         </dependency>
 
+        <!--知识库模块-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-module-knowbase-biz</artifactId>
+        </dependency>
+
         <!-- 图谱模块 -->
         <dependency>
             <groupId>com.insmess.knowledge</groupId>

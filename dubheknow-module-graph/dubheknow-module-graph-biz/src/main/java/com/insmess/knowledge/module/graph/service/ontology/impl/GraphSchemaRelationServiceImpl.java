@@ -42,6 +42,12 @@ public class GraphSchemaRelationServiceImpl  extends ServiceImpl<GraphSchemaRela
         LambdaQueryWrapperX<GraphSchemaRelationPO> wrapper = queryCondition(pageReqVO);
         //设置分页
         Page<GraphSchemaRelationPO> page = new Page<>(pageReqVO.getPageNum(), pageReqVO.getPageSize());
+        //如果startEndId为空，则添加该条件
+        if (pageReqVO.getStartEndId() != null) {
+            wrapper.eq(GraphSchemaRelationPO::getStartSchemaId, pageReqVO.getStartEndId())
+                    .or()
+                    .eq(GraphSchemaRelationPO::getEndSchemaId, pageReqVO.getStartEndId());
+        }
         return graphSchemaRelationMapper.selectPage(page, wrapper);
     }
 

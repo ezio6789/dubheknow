@@ -155,23 +155,6 @@
         :default-sort="defaultSort"
         @sort-change="handleSortChange"
       >
-        <!--        <el-table-column type="selection" width="55" align="center" />-->
-        <!--        <el-table-column v-if="getColumnVisibility(0)" label="ID" align="center" prop="id" />-->
-        <!--        <el-table-column v-if="getColumnVisibility(1)" label="工作区id" align="center" prop="workspaceId">-->
-        <!--          <template #default="scope">-->
-        <!--            {{ scope.row.workspaceId || '-' }}-->
-        <!--          </template>-->
-        <!--        </el-table-column>-->
-        <!--        <el-table-column v-if="getColumnVisibility(2)" label="概念id" align="center" prop="schemaId">-->
-        <!--          <template #default="scope">-->
-        <!--            {{ scope.row.schemaId || '-' }}-->
-        <!--          </template>-->
-        <!--        </el-table-column>-->
-        <!--        <el-table-column v-if="getColumnVisibility(3)" label="概念名称" align="center" prop="schemaName">-->
-        <!--          <template #default="scope">-->
-        <!--            {{ scope.row.schemaName || '-' }}-->
-        <!--          </template>-->
-        <!--        </el-table-column>-->
         <el-table-column
           v-if="getColumnVisibility(4)"
           label="属性名"
@@ -504,13 +487,6 @@
       <el-form ref="attributeRef" :model="form" label-width="80px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="工作区id" prop="workspaceId">
-              <div>
-                {{ form.workspaceId }}
-              </div>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
             <el-form-item label="概念id" prop="schemaId">
               <div>
                 {{ form.schemaId }}
@@ -658,7 +634,13 @@
 </template>
 
 <script setup name="Attribute">
-import { listSchemaAttribute } from "@/api/graph/ontology/schemaAttribute";
+import {
+  listSchemaAttribute,
+  getSchemaAttribute,
+  delSchemaAttribute,
+  addSchemaAttribute,
+  updateSchemaAttribute,
+} from "@/api/graph/ontology/schemaAttribute";
 import { getToken } from "@/utils/auth.js";
 // import { useRoute, useRouter } from "vue-router";
 import moment from "moment";
@@ -749,7 +731,6 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
-    workspaceId: null,
     schemaId: null,
     schemaName: null,
     name: null,
@@ -763,9 +744,6 @@ const data = reactive({
     createTime: null,
   },
   rules: {
-    workspaceId: [
-      { required: true, message: "工作区id不能为空", trigger: "blur" },
-    ],
     schemaId: [{ required: true, message: "概念id不能为空", trigger: "blur" }],
     schemaName: [
       { required: true, message: "概念名称不能为空", trigger: "blur" },
@@ -818,7 +796,7 @@ function getList() {
   }
   listSchemaAttribute(queryParams.value).then((response) => {
     console.log(response);
-    attributeList.value = response.data.rows;
+    attributeList.value = response.data.records;
     total.value = response.data.total;
     loading.value = false;
   });
@@ -845,7 +823,6 @@ function cancel() {
 function reset() {
   form.value = {
     id: null,
-    workspaceId: null,
     schemaId: null,
     schemaName: null,
     name: null,
@@ -906,7 +883,7 @@ function handleAdd() {
 function handleUpdate(row) {
   reset();
   const _id = row.id || ids.value;
-  getAttribute(_id).then((response) => {
+  getSchemaAttribute(_id).then((response) => {
     form.value = response.data;
     open.value = true;
     title.value = "修改概念属性";
@@ -917,7 +894,7 @@ function handleUpdate(row) {
 function handleDetail(row) {
   reset();
   const _id = row.id || ids.value;
-  getAttribute(_id).then((response) => {
+  getSchemaAttribute(_id).then((response) => {
     form.value = response.data;
     openDetail.value = true;
     title.value = "概念属性详情";
@@ -952,7 +929,7 @@ function submitForm() {
         );
       }
       if (form.value.id != null) {
-        updateAttribute(form.value)
+        updateSchemaAttribute(form.value)
           .then((response) => {
             proxy.$modal.msgSuccess("修改成功");
             open.value = false;
@@ -960,7 +937,7 @@ function submitForm() {
           })
           .catch((error) => {});
       } else {
-        addAttribute(form.value)
+        addSchemaAttribute(form.value)
           .then((response) => {
             proxy.$modal.msgSuccess("新增成功");
             open.value = false;
@@ -979,7 +956,7 @@ function handleDelete(row) {
   proxy.$modal
     .confirm('是否确认删除概念属性名为"' + name + '"的数据项？')
     .then(function () {
-      return delAttribute(_ids);
+      return delSchemaAttribute(_ids);
     })
     .then(() => {
       getList();

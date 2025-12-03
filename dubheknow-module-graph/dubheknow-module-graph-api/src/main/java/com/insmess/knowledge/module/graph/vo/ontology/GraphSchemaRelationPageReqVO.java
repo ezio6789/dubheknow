@@ -1,5 +1,6 @@
 package com.insmess.knowledge.module.graph.vo.ontology;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import com.insmess.knowledge.common.core.page.PageParam;
@@ -29,10 +30,9 @@ public class GraphSchemaRelationPageReqVO extends PageParam {
     @Schema(description = "是否可逆", example = "")
     private Integer inverseFlag;
 
-
-
     @Schema(description = "知识库id", example = "")
     private Long knowledgeId;
 
-
+    @TableField(exist = false)
+    private Long startEndId;
 }

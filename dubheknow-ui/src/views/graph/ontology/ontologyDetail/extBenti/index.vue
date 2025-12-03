@@ -1,23 +1,50 @@
 <template>
-  <div class="benti-container">
-    <el-container>
-      <el-aside width="250px">
-        <el-tree
-          :data="treeDataList"
-          :props="defaultProps"
-          highlight-current
-          :expand-on-click-node="false"
-          node-key="id"
-          @current-change="handleCurrentChange"
-          v-if="treeDataList.length"
-        />
-      </el-aside>
-      <el-main>
-        <RightClickMenu :menuList="menuItems" :pos="pos" @select="handleSelect">
-          <div class="benti-graph-container" id="benti-graph-container"></div>
-        </RightClickMenu>
-      </el-main>
-    </el-container>
+  <div class="app-container benti-page">
+    <el-row :gutter="20">
+      <splitpanes class="default-theme">
+        <pane size="22">
+          <div class="left-panel">
+            <div class="pane-header">
+              <div class="pane-title">概念</div>
+            </div>
+            <el-input
+              v-model="treeFilter"
+              placeholder="请输入名称"
+              clearable
+              prefix-icon="Search"
+              class="tree-filter"
+            />
+            <div class="tree-wrap">
+              <el-tree
+                ref="treeRef"
+                :data="treeDataList"
+                :props="defaultProps"
+                highlight-current
+                :expand-on-click-node="false"
+                node-key="id"
+                @current-change="handleCurrentChange"
+                v-if="treeDataList.length"
+                :filter-node-method="filterNode"
+                class="schema-tree"
+              />
+            </div>
+          </div>
+        </pane>
+
+        <pane size="78">
+          <div class="content-card">
+            <div class="content-header">
+              <span class="content-title">概念视图</span>
+            </div>
+            <div class="graph-wrap">
+              <RightClickMenu :menuList="menuItems" :pos="pos" @select="handleSelect">
+                <div class="benti-graph-container" id="benti-graph-container"></div>
+              </RightClickMenu>
+            </div>
+          </div>
+        </pane>
+      </splitpanes>
+    </el-row>
   </div>
 </template>
 
@@ -28,11 +55,11 @@ import Vis from "vis-network/dist/vis-network.min.js";
 import "vis-network/dist/dist/vis-network.min.css";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { deleteNode } from "@/api/graph/ontology/schema";
-import {
-  getExtSchemaGraph,
-  getExtSchemaTree,
-} from "@/api/graph/ontology/schema.js";
+import { getExtSchemaGraph, getExtSchemaTree } from "@/api/graph/ontology/schema.js";
 import { useKnowledgeContext } from "@/hooks/useKnowledgeContext";
+import { Splitpanes, Pane } from "splitpanes";
+import "splitpanes/dist/splitpanes.css";
+
 const { knowledgeId } = useKnowledgeContext();
 
 const menuItems = [
@@ -48,6 +75,8 @@ const props = defineProps({
 });
 
 const treeDataList = ref([]);
+const treeRef = ref();
+const treeFilter = ref("");
 let container = null;
 let graph = null;
 const graphData = reactive({ nodes: [], edges: [] });
@@ -60,8 +89,7 @@ const showData = ref();
 let startNodeId = null;
 let linking = false;
 
-const hasGraphPayload = (val) =>
-  val && Array.isArray(val.entities) && Array.isArray(val.relationships);
+const hasGraphPayload = (val) => val && Array.isArray(val.entities) && Array.isArray(val.relationships);
 
 // -------------------- 工具函数 --------------------
 const getRandomColor = (soft = true) => {
@@ -78,18 +106,13 @@ const getRandomColor = (soft = true) => {
     l /= 100;
     const k = (n) => (n + h / 30) % 12;
     const a = s * Math.min(l, 1 - l);
-    const f = (n) =>
-      l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-    return [
-      Math.round(f(0) * 255),
-      Math.round(f(8) * 255),
-      Math.round(f(4) * 255),
-    ];
+    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
   };
   const [r, g, b] = hslToRgb(h, s, l);
-  return `#${r.toString(16).padStart(2, "0")}${g
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b
     .toString(16)
-    .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+    .padStart(2, "0")}`;
 };
 
 const resetNodeColors = () => {
@@ -147,11 +170,7 @@ const initGraphData = (data) => {
   }));
 
   edges.value = data.relationships
-    .filter(
-      (r) =>
-        nodes.value.some((n) => n.id == r.startId) &&
-        nodes.value.some((n) => n.id == r.endId)
-    )
+    .filter((r) => nodes.value.some((n) => n.id == r.startId) && nodes.value.some((n) => n.id == r.endId))
     .map((r) => ({
       ...r,
       id: r.id + "",
@@ -177,9 +196,7 @@ const setGraph = (data) => {
 
   container.addEventListener("mousemove", (e) => {
     if (!linking || !startNodeId) return;
-    const fromCanvas = graph.canvasToDOM(
-      graph.getPositions([startNodeId])[startNodeId]
-    );
+    const fromCanvas = graph.canvasToDOM(graph.getPositions([startNodeId])[startNodeId]);
     drawTempLine(fromCanvas, { x: e.offsetX, y: e.offsetY });
   });
 
@@ -193,7 +210,7 @@ const setGraph = (data) => {
       size: 10,
       borderWidth: 0,
       color: { hover: { background: "#89b8ff", border: "#89b8ff4d" } },
-      font: { size: 14, color: "#d7e7ff" },
+      font: { size: 16, color: "#2c3e50", face: "Microsoft YaHei" },
       shapeProperties: { useBorderWithImage: true },
       label: "",
     },
@@ -201,11 +218,11 @@ const setGraph = (data) => {
       length: 150,
       arrows: { to: { enabled: true, scaleFactor: 1 } },
       arrowStrikethrough: false,
-      color: { color: "#89b8ff", highlight: "#89b8ff", hover: "#89b8ff" },
+      color: { color: "#6b7aff", highlight: "#6b7aff", hover: "#6b7aff" },
       hoverWidth: 2,
       smooth: { enabled: true, type: "dynamic" },
       selectionWidth: 4,
-      font: { size: 14, color: "#89b8ff", align: "top" },
+      font: { size: 13, color: "#2c3e50", face: "Microsoft YaHei", align: "top" },
     },
     physics: {
       enabled: true,
@@ -273,9 +290,7 @@ const setGraph = (data) => {
           to: endNodeId,
           label: value,
         });
-        const startNodeData = nodes.value.find(
-          (item) => +item.id === +startNodeId
-        );
+        const startNodeData = nodes.value.find((item) => +item.id === +startNodeId);
         const endNodeData = nodes.value.find((item) => +item.id === +endNodeId);
         const newEdges = {
           endId: +endNodeId,
@@ -302,9 +317,7 @@ const setGraph = (data) => {
     startNodeId = graph.getNodeAt(e.pointer.DOM);
     if (!startNodeId) return;
 
-    const domPos = graph.canvasToDOM(
-      graph.getPositions([startNodeId])[startNodeId]
-    );
+    const domPos = graph.canvasToDOM(graph.getPositions([startNodeId])[startNodeId]);
     const containerRect = graph.body.container.getBoundingClientRect();
     pos.value = {
       x: containerRect.left + domPos.x,
@@ -313,9 +326,7 @@ const setGraph = (data) => {
   });
   graph.on("dragging", (params) => {
     if (!startNodeId) return;
-    const domPos = graph.canvasToDOM(
-      graph.getPositions([startNodeId])[startNodeId]
-    );
+    const domPos = graph.canvasToDOM(graph.getPositions([startNodeId])[startNodeId]);
     const containerRect = graph.body.container.getBoundingClientRect();
     pos.value = {
       x: containerRect.left + domPos.x,
@@ -330,27 +341,18 @@ const handleCurrentChange = (node) => {
   if (!newNodes.length) return graph.moveTo({ scale: 1.1 });
 
   const nodeIds = newNodes.map((n) => n.id);
-  const relatedEdges = edges.value.filter(
-    (e) => nodeIds.includes(e.from) || nodeIds.includes(e.to)
-  );
+  const relatedEdges = edges.value.filter((e) => nodeIds.includes(e.from) || nodeIds.includes(e.to));
   const connectedNodeIds = relatedEdges.map((e) => e.to);
-  const connectedNodes = nodes.value.filter((n) =>
-    connectedNodeIds.includes(n.id)
-  );
+  const connectedNodes = nodes.value.filter((n) => connectedNodeIds.includes(n.id));
 
   const finalNodes = [...newNodes, ...connectedNodes];
   const nodesHL = finalNodes.map((n) => n.id);
   const edgesHL = relatedEdges.map((e) => e.id);
 
   resetNodeColors();
-  finalNodes.forEach((n) =>
-    graphData.nodes.update({ id: n.id, size: 20, borderWidth: 6 })
-  );
+  finalNodes.forEach((n) => graphData.nodes.update({ id: n.id, size: 20, borderWidth: 6 }));
 
-  graph.setSelection(
-    { nodes: nodesHL, edges: edgesHL },
-    { highlight: true, unselectAll: true }
-  );
+  graph.setSelection({ nodes: nodesHL, edges: edgesHL }, { highlight: true, unselectAll: true });
   setTimeout(
     () =>
       graph.focus(node.id + "", {
@@ -418,6 +420,15 @@ watch(
   { deep: true, immediate: true }
 );
 
+watch(treeFilter, (val) => {
+  treeRef.value?.filter(val);
+});
+
+const filterNode = (value, data) => {
+  if (!value) return true;
+  return (data.name || "").includes(value);
+};
+
 const loadGraphData = () => {
   const data = { knowledgeId: knowledgeId.value };
   getExtSchemaGraph(data)
@@ -454,33 +465,66 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.benti-container {
+.benti-page {
   height: 100%;
-  margin-top: 10px;
-
-  .el-container {
-    display: flex;
-    & > * {
-      margin: 5px 0;
-    }
-  }
 }
-
-.el-aside {
+.left-panel {
   background: #fff;
-  height: 80vh;
-  padding: 10px;
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+  height: 78vh;
+  display: flex;
+  flex-direction: column;
+}
+.pane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.pane-title {
+  font-weight: 600;
+}
+.tree-filter {
+  margin-bottom: 10px;
+}
+.tree-wrap {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  padding: 6px;
+}
+.schema-tree {
+  max-height: 100%;
   overflow: auto;
 }
-
-.el-main {
+.content-card {
   background: #fff;
-  height: 80vh;
-  margin-left: 5px;
-  padding: 0;
+  padding: 16px 18px;
+  min-height: 78vh;
+  border-radius: 8px;
+  border: 1px solid #eef0f5;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #f0f2f6;
+}
+.content-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #1f2d3d;
+}
+.graph-wrap {
+  height: calc(78vh - 40px);
   overflow: hidden;
 }
-
 .benti-graph-container {
   width: 100%;
   height: 100%;

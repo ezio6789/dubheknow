@@ -28,7 +28,6 @@ public class GraphSchemaSaveReqVO extends BaseEntity {
     private String name;
 
     @Schema(description = "概念描述", example = "")
-    @NotBlank(message = "概念描述不能为空")
     @Size(max = 1024, message = "概念描述长度不能超过1024个字符")
     private String description;
 

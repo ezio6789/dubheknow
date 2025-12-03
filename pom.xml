@@ -14,6 +14,7 @@
         <module>dubheknow-module-system</module>
         <module>dubheknow-server</module>
         <module>dubheknow-module-graph</module>
+        <module>dubheknow-module-knowbase</module>
     </modules>
 
     <properties>
@@ -45,6 +46,17 @@
     <!-- 依赖版本统一由 Spring Boot BOM 管理 -->
     <dependencyManagement>
         <dependencies>
+            <!--知识库-->
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-knowbase-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-module-knowbase-biz</artifactId>
+                <version>${revision}</version>
+            </dependency>
             <!-- 图谱模块 -->
             <dependency>
                 <groupId>com.insmess.knowledge</groupId>

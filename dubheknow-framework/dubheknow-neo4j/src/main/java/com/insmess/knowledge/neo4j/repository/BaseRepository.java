@@ -1,8 +1,7 @@
 package com.insmess.knowledge.neo4j.repository;
 
 import com.insmess.knowledge.neo4j.enums.Neo4jLabelEnum;
-import org.neo4j.driver.internal.InternalNode;
-import org.neo4j.driver.internal.value.NodeValue;
+import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.data.neo4j.core.Neo4jTemplate;
@@ -73,21 +72,32 @@ public interface BaseRepository<T, ID> extends Neo4jRepository<T, ID> {
      */
     default List<Map<String, Object>> nodeListMap(Neo4jQueryWrapper<T> wrapper, Set<String> labels) {
         Neo4jClient neo4jClient = SpringUtils.getBean(Neo4jClient.class);
-        List<Map<String, Object>> collect = neo4jClient.query(wrapper.getNodeQuery(labels))
+        Collection<Map<String, Object>> result = neo4jClient.query(wrapper.getNodeQuery(labels))
                 .bindAll(wrapper.getParams())
-                .fetchAs(NodeValue.class)  // 获取 Node 对象
-                .all()
-                .stream()
-                .map(nodeValue -> {
+                .fetch()
+                .all();
+
+        return result.stream()
+                .map(objectMap -> {
+                    Node node = (Node) objectMap.get("n");
+                    // 兼容可能存在的其他列名
+                    if (node == null) {
+                        Optional<Node> firstNode = objectMap.values().stream()
+                                .filter(Node.class::isInstance)
+                                .map(Node.class::cast)
+                                .findFirst();
+                        node = firstNode.orElse(null);
+                    }
+                    if (node == null) {
+                        return Collections.<String, Object>emptyMap();
+                    }
                     HashMap<String, Object> properties = new HashMap<>();
-                    InternalNode node = (InternalNode) nodeValue.asNode();
                     properties.put("id", node.id());
-                    // 获取节点的属性
-                    node.asMap().forEach((key, value) -> properties.put(key, value));
+                    node.asMap().forEach(properties::put);
                     return properties;
                 })
+                .filter(map -> !map.isEmpty())
                 .collect(Collectors.toList());
-        return collect;
     }
 
     /**
@@ -104,8 +114,8 @@ public interface BaseRepository<T, ID> extends Neo4jRepository<T, ID> {
                 .all();
         ArrayList<Map<String, Object>> relationships = new ArrayList<>();
         for (Map<String, Object> objectMap : result) {
-            InternalNode n = (InternalNode) objectMap.get("n");
-            InternalNode m = (InternalNode) objectMap.get("m");
+            Node n = (Node) objectMap.get("n");
+            Node m = (Node) objectMap.get("m");
             Relationship r = (Relationship) objectMap.get("r");
 
             if (m != null) {
@@ -157,8 +167,8 @@ public interface BaseRepository<T, ID> extends Neo4jRepository<T, ID> {
         Set<String> processedRelations = new HashSet<>();
 
         for (Map<String, Object> objectMap : allResults) {
-            InternalNode n = (InternalNode) objectMap.get("n");
-            InternalNode m = (InternalNode) objectMap.get("m");
+            Node n = (Node) objectMap.get("n");
+            Node m = (Node) objectMap.get("m");
             Relationship r = (Relationship) objectMap.get("r");
 
             if (m != null) {

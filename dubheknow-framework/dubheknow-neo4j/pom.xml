@@ -11,10 +11,15 @@
 
     <artifactId>dubheknow-neo4j</artifactId>
 
+    <properties>
+        <neo4j-java-driver.version>5.26.1</neo4j-java-driver.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.neo4j.driver</groupId>
             <artifactId>neo4j-java-driver</artifactId>
+            <version>${neo4j-java-driver.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
