@@ -21,7 +21,7 @@
   <div class="app-container" ref="app-container">
     <div class="pagecont-top" v-show="showSearch" style="padding-bottom:15px">
       <div class="infotop" >
-        <div class="infotop-title mb15">
+        <div class="infotop-title mb8">
             #foreach($column in $columns)
               #set($javaField=$column.javaField)
               #if($column.pk)

@@ -1,5 +1,5 @@
 <template>
-  <div class="justify-between mb15">
+  <div class="justify-between mb8">
     <el-row :gutter="10" class="btn-style">
       <el-col :span="1.5">
         <el-button
