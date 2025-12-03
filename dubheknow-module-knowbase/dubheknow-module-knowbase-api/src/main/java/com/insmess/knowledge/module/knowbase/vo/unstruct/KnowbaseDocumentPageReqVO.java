@@ -17,11 +17,11 @@ public class KnowbaseDocumentPageReqVO extends PageParam {
     private static final long serialVersionUID = 1L;
     @Schema(description = "ID", example = "")
     private Long id;
-    @Schema(description = "知识分类id", example = "")
-    private Long categoryId;
+    @Schema(description = "目录id", example = "")
+    private Long dirId;
 
-    @Schema(description = "知识分类名称", example = "")
-    private String categoryName;
+    @Schema(description = "目录名称", example = "")
+    private String dirName;
 
     @Schema(description = "文件名称", example = "")
     private String name;

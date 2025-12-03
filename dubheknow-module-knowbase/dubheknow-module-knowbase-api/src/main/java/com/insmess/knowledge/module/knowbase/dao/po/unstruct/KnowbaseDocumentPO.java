@@ -30,11 +30,11 @@ public class KnowbaseDocumentPO extends BaseEntity {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /** 知识分类id */
-    private Long categoryId;
+    /** 目录id */
+    private Long dirId;
 
-    /** 知识分类名称 */
-    private String categoryName;
+    /** 目录名称 */
+    private String dirName;
 
     /** 文件名称 */
     private String name;

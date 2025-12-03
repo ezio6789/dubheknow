@@ -23,21 +23,20 @@ public class KnowbaseDocumentSaveReqVO extends BaseEntity {
     @Schema(description = "ID")
     private Long id;
 
-    @Schema(description = "知识分类id", example = "")
-    @NotNull(message = "知识分类id不能为空")
-    private Long categoryId;
+    @Schema(description = "目录id", example = "")
+    @NotNull(message = "目录id不能为空")
+    private Long dirId;
 
-    @Schema(description = "知识分类名称", example = "")
-    @NotBlank(message = "知识分类名称不能为空")
-    @Size(max = 128, message = "知识分类名称长度不能超过128个字符")
-    private String categoryName;
+    @Schema(description = "目录名称", example = "")
+    @NotBlank(message = "目录名称不能为空")
+    @Size(max = 128, message = "目录名称长度不能超过128个字符")
+    private String dirName;
 
     @Schema(description = "文件名称", example = "")
     @NotBlank(message = "文件名称不能为空")
     private String name;
 
     @Schema(description = "文件类型", example = "")
-    @NotBlank(message = "文件类型不能为空")
     @Size(max = 255, message = "文件类型长度不能超过255个字符")
     private String type;
 

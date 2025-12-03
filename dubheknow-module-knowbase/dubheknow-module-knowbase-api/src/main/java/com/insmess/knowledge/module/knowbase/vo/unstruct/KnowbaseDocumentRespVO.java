@@ -24,13 +24,13 @@ public class KnowbaseDocumentRespVO implements Serializable {
     @Schema(description = "ID")
     private Long id;
 
-    @Excel(name = "知识分类id")
-    @Schema(description = "知识分类id", example = "")
-    private Long categoryId;
+    @Excel(name = "目录id")
+    @Schema(description = "目录id", example = "")
+    private Long dirId;
 
-    @Excel(name = "知识分类名称")
-    @Schema(description = "知识分类名称", example = "")
-    private String categoryName;
+    @Excel(name = "目录名称")
+    @Schema(description = "目录名称", example = "")
+    private String dirName;
 
     @Excel(name = "文件名称")
     @Schema(description = "文件名称", example = "")

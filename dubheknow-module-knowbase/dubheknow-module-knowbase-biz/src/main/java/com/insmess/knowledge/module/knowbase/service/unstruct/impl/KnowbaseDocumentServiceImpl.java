@@ -157,8 +157,8 @@ public class KnowbaseDocumentServiceImpl  extends ServiceImpl<KnowbaseDocumentMa
     private LambdaQueryWrapperX<KnowbaseDocumentPO> queryCondition(KnowbaseDocumentPageReqVO pageReqVO) {
         KnowbaseDocumentPO knowbaseDocumentPO = KnowbaseDocumentConvert.INSTANCE.convertToPO(pageReqVO);
         return new LambdaQueryWrapperX<KnowbaseDocumentPO>()
-                .eqIfPresent(KnowbaseDocumentPO::getCategoryId, knowbaseDocumentPO.getCategoryId())
-                .likeIfPresent(KnowbaseDocumentPO::getCategoryName, knowbaseDocumentPO.getCategoryName())
+                .eqIfPresent(KnowbaseDocumentPO::getDirId, knowbaseDocumentPO.getDirId())
+                .likeIfPresent(KnowbaseDocumentPO::getDirName, knowbaseDocumentPO.getDirName())
                 .likeIfPresent(KnowbaseDocumentPO::getName, knowbaseDocumentPO.getName())
                 .eqIfPresent(KnowbaseDocumentPO::getType, knowbaseDocumentPO.getType())
                 .eqIfPresent(KnowbaseDocumentPO::getParseStatus, knowbaseDocumentPO.getParseStatus())
