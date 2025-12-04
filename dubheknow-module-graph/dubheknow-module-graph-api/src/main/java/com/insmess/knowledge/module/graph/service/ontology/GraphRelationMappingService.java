@@ -80,4 +80,11 @@ public interface GraphRelationMappingService extends IService<GraphRelationMappi
      */
     String importGraphRelationMapping(List<GraphRelationMappingRespVO> importExcelList, boolean isUpdateSupport, String operName);
 
+    /**
+     * 查询关系映射列表
+     *
+     * @param relationMappingPageReqVO 关系映射查询参数
+     * @return 关系映射列表
+     */
+    List<GraphRelationMappingPO> list(GraphRelationMappingPageReqVO relationMappingPageReqVO);
 }

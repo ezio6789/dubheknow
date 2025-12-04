@@ -20,189 +20,95 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-@NoRepositoryBean  // 关键注解：阻止Spring实例化此基础仓库
+@NoRepositoryBean
 public interface BaseRepository<T, ID> extends Neo4jRepository<T, ID> {
 
     /**
-     * 根据查询条件查询
-     *
-     * @param wrapper
-     * @return
+     * 基于包装器生成的查询语句读取节点实体。
      */
     default List<T> find(Neo4jQueryWrapper<T> wrapper) {
-        Neo4jTemplate neo4jTemplate = SpringUtils.getBean(Neo4jTemplate.class);
-        String cypherQuery = wrapper.getCypherQuery();
-        Map<String, Object> params = wrapper.getParams();
-        List<T> all = neo4jTemplate.findAll(cypherQuery, params, wrapper.getEntityClass());
-        return all;
+        return neo4jTemplate().findAll(wrapper.getCypherQuery(), wrapper.getParams(), wrapper.getEntityClass());
     }
 
-
     /**
-     * 分页查询
-     *
-     * @param wrapper
-     * @return
+     * 分页查询，返回数据与总量。
      */
     default PageResult<T> findPage(Neo4jQueryWrapper<T> wrapper) {
-        Neo4jTemplate neo4jTemplate = SpringUtils.getBean(Neo4jTemplate.class);
-        String cypherQuery = wrapper.getCypherQuery();
-        Map<String, Object> params = wrapper.getParams();
-        List<T> row = neo4jTemplate.findAll(cypherQuery, params, wrapper.getEntityClass());
+        List<T> rows = neo4jTemplate().findAll(wrapper.getCypherQuery(), wrapper.getParams(), wrapper.getEntityClass());
         Long count = this.count(wrapper);
-        return new PageResult<>(row, count);
-    }
-
-
-
-
-    default List<T> relationChain(Neo4jQueryWrapper<T> wrapper) {
-        Neo4jTemplate neo4jTemplate = SpringUtils.getBean(Neo4jTemplate.class);
-        String cypherQuery = wrapper.getRelationChainCypherQuery();
-        Map<String, Object> params = wrapper.getParams();
-         return neo4jTemplate.findAll(cypherQuery, params, wrapper.getEntityClass());
+        return new PageResult<>(rows, count);
     }
 
     /**
-     * 获取节点list, 所有属性
-     *
-     * @param wrapper
-     * @return
+     * 关系链查询，直接使用封装好的 Cypher。
+     */
+    default List<T> relationChain(Neo4jQueryWrapper<T> wrapper) {
+        return neo4jTemplate().findAll(wrapper.getRelationChainCypherQuery(), wrapper.getParams(), wrapper.getEntityClass());
+    }
+
+    /**
+     * 返回节点属性映射（包含 id），兼容不同别名的查询结果。
      */
     default List<Map<String, Object>> nodeListMap(Neo4jQueryWrapper<T> wrapper, Set<String> labels) {
-        Neo4jClient neo4jClient = SpringUtils.getBean(Neo4jClient.class);
-        Collection<Map<String, Object>> result = neo4jClient.query(wrapper.getNodeQuery(labels))
+        Collection<Map<String, Object>> rows = neo4jClient().query(wrapper.getNodeQuery(labels))
                 .bindAll(wrapper.getParams())
                 .fetch()
                 .all();
 
-        return result.stream()
-                .map(objectMap -> {
-                    Node node = (Node) objectMap.get("n");
-                    // 兼容可能存在的其他列名
-                    if (node == null) {
-                        Optional<Node> firstNode = objectMap.values().stream()
-                                .filter(Node.class::isInstance)
-                                .map(Node.class::cast)
-                                .findFirst();
-                        node = firstNode.orElse(null);
-                    }
-                    if (node == null) {
-                        return Collections.<String, Object>emptyMap();
-                    }
-                    HashMap<String, Object> properties = new HashMap<>();
-                    properties.put("id", node.id());
-                    node.asMap().forEach(properties::put);
-                    return properties;
-                })
-                .filter(map -> !map.isEmpty())
+        return rows.stream()
+                .map(BaseRepository::pickNode)
+                .filter(Objects::nonNull)
+                .map(BaseRepository::nodeProperties)
                 .collect(Collectors.toList());
     }
 
     /**
-     * 根据条件查询关系
-     *
-     * @param wrapper
-     * @return
+     * 查询正向关系。
      */
     default List<Map<String, Object>> relListMap(Neo4jQueryWrapper<T> wrapper, Set<String> labels) {
-        Neo4jClient neo4jClient = SpringUtils.getBean(Neo4jClient.class);
-        Collection<Map<String, Object>> result = neo4jClient.query(wrapper.getRelQuery(labels))
+        Collection<Map<String, Object>> rows = neo4jClient().query(wrapper.getRelQuery(labels))
                 .bindAll(wrapper.getParams())
-                .fetch()  // 删除 fetchAs(Record.class)，直接使用默认映射
+                .fetch()
                 .all();
-        ArrayList<Map<String, Object>> relationships = new ArrayList<>();
-        for (Map<String, Object> objectMap : result) {
-            Node n = (Node) objectMap.get("n");
-            Node m = (Node) objectMap.get("m");
-            Relationship r = (Relationship) objectMap.get("r");
 
-            if (m != null) {
-                Map<String, Object> map = m.asMap();
-                HashMap<String, Object> relationshipMap = new HashMap<>();
-                relationshipMap.put("startId", n.id());
-                relationshipMap.put("endId", m.id());
-                relationshipMap.put("startName", n.asMap().get("name"));
-                relationshipMap.put("endName", map.get("name"));
-                relationshipMap.put("id", r.id());
-                relationshipMap.put("relationType", r.type());
-                relationships.add(relationshipMap);
-            }
-        }
-        return relationships;
+        return rows.stream()
+                .map(BaseRepository::relationshipRow)
+                .flatMap(Optional::stream)
+                .collect(Collectors.toList());
     }
 
     /**
-     * 根据条件查询关系（所有关系，包含出关系和入关系）
-     *
-     * @param wrapper
-     * @return
+     * 查询双向关系并去重。
      */
     default List<Map<String, Object>> relListMapAll(Neo4jQueryWrapper<T> wrapper, Set<String> labels) {
-        Neo4jClient neo4jClient = SpringUtils.getBean(Neo4jClient.class);
-        // 分别查询正向和反向关系
-        String cypherQuery = wrapper.getRelQuery(labels);
+        String forwardCypher = wrapper.getRelQuery(labels);
         Map<String, Object> params = wrapper.getParams();
+        String reverseCypher = forwardCypher.replace("-[r]->", "<-[r]-");
 
-        // 查询正向关系
-        Collection<Map<String, Object>> forwardResult = neo4jClient.query(cypherQuery)
+        Collection<Map<String, Object>> forwardRows = neo4jClient().query(forwardCypher)
+                .bindAll(params)
+                .fetch()
+                .all();
+        Collection<Map<String, Object>> reverseRows = neo4jClient().query(reverseCypher)
                 .bindAll(params)
                 .fetch()
                 .all();
 
-        // 查询反向关系（修改Cypher语句）
-        String reverseCypherQuery = cypherQuery.replace("-[r]->", "<-[r]-");
-        Collection<Map<String, Object>> reverseResult = neo4jClient.query(reverseCypherQuery)
-                .bindAll(params)
-                .fetch()
-                .all();
-
-        // 合并结果
-        List<Map<String, Object>> allResults = new ArrayList<>();
-        allResults.addAll(forwardResult);
-        allResults.addAll(reverseResult);
-
-        ArrayList<Map<String, Object>> relationships = new ArrayList<>();
-        Set<String> processedRelations = new HashSet<>();
-
-        for (Map<String, Object> objectMap : allResults) {
-            Node n = (Node) objectMap.get("n");
-            Node m = (Node) objectMap.get("m");
-            Relationship r = (Relationship) objectMap.get("r");
-
-            if (m != null) {
-                // 创建统一的关系标识符
-                String relationKey = Math.min(n.id(), m.id()) + "_" + r.type() + "_" + Math.max(n.id(), m.id());
-
-                if (processedRelations.contains(relationKey)) {
-                    continue;
-                }
-
-                processedRelations.add(relationKey);
-                Map<String, Object> map = m.asMap();
-                HashMap<String, Object> relationshipMap = new HashMap<>();
-                //判断方向
-                if (r.startNodeId() == n.id()) {
-                    relationshipMap.put("startId", n.id());
-                    relationshipMap.put("startName", n.asMap().get("name"));
-                    relationshipMap.put("endId", m.id());
-                    relationshipMap.put("endName", map.get("name"));
-                } else {
-                    relationshipMap.put("startId", m.id());
-                    relationshipMap.put("startName", map.get("name"));
-                    relationshipMap.put("endId", n.id());
-                    relationshipMap.put("endName", n.asMap().get("name"));
-                }
-                relationshipMap.put("id", r.id());
-                relationshipMap.put("relationType", r.type());
-                relationships.add(relationshipMap);
-            }
-        }
+        Set<String> seen = new HashSet<>();
+        List<Map<String, Object>> relationships = new ArrayList<>();
+        Stream.concat(forwardRows.stream(), reverseRows.stream())
+                .map(BaseRepository::relationshipRowWithDirection)
+                .flatMap(Optional::stream)
+                .forEach(rel -> {
+                    String key = relationKey(rel);
+                    if (seen.add(key)) {
+                        relationships.add(rel);
+                    }
+                });
         return relationships;
     }
-
-
 
     default void executeUpdate(Neo4jBuildWrapper<T> wrapper, String label, Map<String, Object> paramMap, Map<String, Object> updateMap) {
         executeUpdate(wrapper, label, paramMap, updateMap, null);
@@ -213,20 +119,13 @@ public interface BaseRepository<T, ID> extends Neo4jRepository<T, ID> {
                                Map<String, Object> paramMap,
                                Map<String, Object> updateMap,
                                List<String> addLabels) {
-        Neo4jClient neo4jClient = SpringUtils.getBean(Neo4jClient.class);
         String query = wrapper.updateQuery(label, paramMap, updateMap, addLabels);
-
-        neo4jClient.query(query)
-                .bindAll(updateMap != null ? updateMap : paramMap)
-                .run();
+        Map<String, Object> params = Optional.ofNullable(updateMap).orElse(paramMap);
+        neo4jClient().query(query).bindAll(params).run();
     }
 
-
     /**
-     * 更新节点的属性和标签
-     *
-     * @param wrapper
-     * @return
+     * 同时更新节点属性与 label。
      */
     default void executeUpdatePropertiesAndLabel(Neo4jBuildWrapper<T> wrapper,
                                                  String label,
@@ -234,221 +133,236 @@ public interface BaseRepository<T, ID> extends Neo4jRepository<T, ID> {
                                                  Map<String, Object> updateMap,
                                                  List<String> addLabel,
                                                  List<String> removeLabel) {
-        Neo4jClient neo4jClient = SpringUtils.getBean(Neo4jClient.class);
         String query = wrapper.updateQuery(label, paramMap, updateMap, addLabel, removeLabel);
-
-        neo4jClient.query(query)
-                .bindAll(updateMap != null ? updateMap : paramMap)
-                .run();
+        Map<String, Object> params = Optional.ofNullable(updateMap).orElse(paramMap);
+        neo4jClient().query(query).bindAll(params).run();
     }
 
-
     /**
-     * 进行实体融合 将sourceEntityId合并到targetEntityId实体中
-     * @param sourceEntityId 来源id
-     * @param targetEntityId
-     * @param startQueryWrapper 被合并节点的查询条件
-     * @param attributeMap 合并后的属性
-     * @return
+     * 实体融合：迁移关系并合并属性。
      */
     @Transactional
-    default void fusionNode(Long sourceEntityId, Long targetEntityId, Neo4jQueryWrapper<T> startQueryWrapper, Neo4jBuildWrapper<T> wrapper, Map<String, Object> attributeMap) {
-        //融合实体
-        Neo4jClient neo4jClient = SpringUtils.getBean(Neo4jClient.class);
-        //融合关系
-        //Neo4jLabelEnum.DYNAMICENTITY转成Set集合
+    default void fusionNode(Long sourceEntityId,
+                            Long targetEntityId,
+                            Neo4jQueryWrapper<T> startQueryWrapper,
+                            Neo4jBuildWrapper<T> wrapper,
+                            Map<String, Object> attributeMap) {
         Set<String> labels = Collections.singleton(Neo4jLabelEnum.DYNAMICENTITY.getLabel());
-        List<Map<String, Object>> maps = relListMapAll(startQueryWrapper, labels);
-        for (Map<String, Object> map : maps) {
-            Long startId = Long.valueOf(map.get("startId").toString());
-            Long endId = Long.valueOf(map.get("endId").toString());
-            String relationType = map.get("relationType").toString();
-            Map<String, Object> relMap = new HashMap<>();
-            //判断关系
+        List<Map<String, Object>> relations = relListMapAll(startQueryWrapper, labels);
+        for (Map<String, Object> relation : relations) {
+            Long startId = Long.valueOf(relation.get("startId").toString());
+            Long endId = Long.valueOf(relation.get("endId").toString());
+            String relationType = relation.get("relationType").toString();
             if (startId.equals(sourceEntityId)) {
-                //2. 迁移关系。
-                mergeRelationship(Neo4jLabelEnum.DYNAMICENTITY.getLabel(), wrapper, targetEntityId, endId, relationType, relMap);
+                mergeRelationship(Neo4jLabelEnum.DYNAMICENTITY.getLabel(), wrapper, targetEntityId, endId, relationType, new HashMap<>());
             } else {
-                //2. 迁移关系。
-                mergeRelationship(Neo4jLabelEnum.DYNAMICENTITY.getLabel(), wrapper, startId, targetEntityId, relationType, relMap);
+                mergeRelationship(Neo4jLabelEnum.DYNAMICENTITY.getLabel(), wrapper, startId, targetEntityId, relationType, new HashMap<>());
             }
         }
-        //修改目标实体的属性
-        Map<String, Object> params = new HashMap<>();
-        params.put("id", targetEntityId);
-        executeUpdate(wrapper, Neo4jLabelEnum.DYNAMICENTITY.getLabel(), params, attributeMap);
-        //将原节点变为已融合状态
-        Map<String, Object> attrMap2 = new HashMap<>();
-        Map<String, Object> params2 = new HashMap<>();
-        attrMap2.put("fusion", 1);
-        params2.put("id", sourceEntityId);
-        executeUpdate(wrapper, Neo4jLabelEnum.DYNAMICENTITY.getLabel(), params2, attrMap2);
+        Map<String, Object> targetParams = new HashMap<>();
+        targetParams.put("id", targetEntityId);
+        executeUpdate(wrapper, Neo4jLabelEnum.DYNAMICENTITY.getLabel(), targetParams, attributeMap);
+
+        Map<String, Object> fusionFlag = new HashMap<>();
+        fusionFlag.put("fusion", 1);
+        Map<String, Object> sourceParams = new HashMap<>();
+        sourceParams.put("id", sourceEntityId);
+        executeUpdate(wrapper, Neo4jLabelEnum.DYNAMICENTITY.getLabel(), sourceParams, fusionFlag);
     }
 
     /**
-     * 如果节点存在, 更新此节点的属性, 如果节点不存在, 创建节点和属性
-     *
-     * @param wrapper
-     * @param mergeMap
-     * @param attributeMap
-     * @return
+     * 如果节点存在则更新，不存在则创建；允许追加新 label。
      */
     @Transactional
     default List<T> mergeCreateNode(String label, Neo4jBuildWrapper<T> wrapper, Map<String, Object> mergeMap, Map<String, Object> attributeMap) {
         return mergeCreateNode(label, wrapper, mergeMap, attributeMap, null);
     }
 
-    default List<T> mergeCreateNode(String label, Neo4jBuildWrapper<T> wrapper, Map<String, Object> mergeMap, Map<String, Object> attributeMap, String newLabel) {
-        Neo4jClient neo4jClient = SpringUtils.getBean(Neo4jClient.class);
+    default List<T> mergeCreateNode(String label,
+                                    Neo4jBuildWrapper<T> wrapper,
+                                    Map<String, Object> mergeMap,
+                                    Map<String, Object> attributeMap,
+                                    String newLabel) {
         String cypherQuery = wrapper.mergeCreateNode(label, mergeMap, attributeMap, newLabel);
+        Map<String, Object> params = normalizeParams(mergeMap, attributeMap);
 
-        // 合并两个Map，避免参数名冲突
-        Map<String, Object> combinedParams = new HashMap<>();
-        if (mergeMap != null) {
-            combinedParams.putAll(mergeMap);
-        }
-        if (attributeMap != null) {
-            combinedParams.putAll(attributeMap);
-        }
-
-        // 在传递参数之前进行转换
-        if (combinedParams != null) {
-            combinedParams.replaceAll((key, value) -> {
-                if (value instanceof java.sql.Date) {
-                    return ((java.sql.Date) value).toLocalDate();
-                }
-                if (value instanceof BigDecimal) {
-                    return ((BigDecimal) value).doubleValue();
-                }
-                if (value instanceof BigInteger) {
-                    return ((BigInteger) value).longValue();
-                }
-                return value;
-            });
-        }
-
-        return new ArrayList<>(neo4jClient.query(cypherQuery)
-                .bindAll(combinedParams)
+        return new ArrayList<>(neo4jClient().query(cypherQuery)
+                .bindAll(params)
                 .fetchAs(wrapper.getEntityClass())
                 .all());
     }
 
-
-    /*default List<T> mergeCreateNode(String label, Neo4jBuildWrapper<T> wrapper, Map<String, Object> mergeMap, Map<String, Object> attributeMap) {
-        Neo4jTemplate neo4jTemplate = SpringUtils.getBean(Neo4jTemplate.class);
-        String cypherQuery = wrapper.mergeCreateNode(label, mergeMap, attributeMap);
-        return neo4jTemplate.findAll(cypherQuery, wrapper.getEntityClass());
-    }*/
-
-
     /**
-     * 根据起点和结点创建关系 如果起点或者终点不存在, 会创建节点
-     *
-     * @param wrapper
-     * @param startNodeMap
-     * @param endNodeMap
-     * @param rel
-     * @return
+     * 创建或更新关系（节点属性由 Map 描述）。
      */
     @Transactional
-    default List<T> mergeRelationship(String label, Neo4jBuildWrapper<T> wrapper, Map<String, Object> startNodeMap, Map<String, Object> endNodeMap, String rel, Map<String, Object> relMap) {
-        Neo4jClient neo4jClient = SpringUtils.getBean(Neo4jClient.class);
+    default List<T> mergeRelationship(String label,
+                                      Neo4jBuildWrapper<T> wrapper,
+                                      Map<String, Object> startNodeMap,
+                                      Map<String, Object> endNodeMap,
+                                      String rel,
+                                      Map<String, Object> relMap) {
         String cypherQuery = wrapper.createRelationship(label, startNodeMap, endNodeMap, rel, relMap);
-
-        // 合并所有参数Map，避免参数名冲突
-        Map<String, Object> combinedParams = new HashMap<>();
-        if (startNodeMap != null) {
-            combinedParams.putAll(startNodeMap);
-        }
-        if (endNodeMap != null) {
-            combinedParams.putAll(endNodeMap);
-        }
-        if (relMap != null) {
-            combinedParams.putAll(relMap);
-        }
-
-        return new ArrayList<>(neo4jClient.query(cypherQuery)
-                .bindAll(combinedParams)
+        Map<String, Object> params = mergeParams(startNodeMap, endNodeMap, relMap);
+        return new ArrayList<>(neo4jClient().query(cypherQuery)
+                .bindAll(params)
                 .fetchAs(wrapper.getEntityClass())
                 .all());
     }
 
-//    default List<T> mergeRelationship(String label, Neo4jBuildWrapper<T> wrapper, Map<String, Object> startNodeMap, Map<String, Object> endNodeMap, String rel, Map<String, Object> relMap) {
-//        Neo4jTemplate neo4jTemplate = SpringUtils.getBean(Neo4jTemplate.class);
-//        String cypherQuery = wrapper.createRelationship(label, startNodeMap, endNodeMap, rel, relMap);
-//        return neo4jTemplate.findAll(cypherQuery, wrapper.getEntityClass());
-//    }
-
     /**
-     * 根据起点id和结点id创建关系
-     * @param label
-     * @param wrapper
-     * @param startNodeId
-     * @param endNodeId
-     * @param rel
-     * @param relMap
-     * @return
+     * 根据节点 id 创建关系。
      */
     default List<T> mergeRelationship(String label, Neo4jBuildWrapper<T> wrapper, Long startNodeId, Long endNodeId, String rel, Map<String, Object> relMap) {
-        Neo4jTemplate neo4jTemplate = SpringUtils.getBean(Neo4jTemplate.class);
         String cypherQuery = wrapper.createRelationship(label, startNodeId, endNodeId, rel, relMap);
-        return neo4jTemplate.findAll(cypherQuery, wrapper.getEntityClass());
+        return neo4jTemplate().findAll(cypherQuery, wrapper.getEntityClass());
     }
 
     /**
-     * 统计查询
-     *
-     * @param wrapper
-     * @return
+     * 统计查询。
      */
     default Long count(Neo4jQueryWrapper<T> wrapper) {
-        Neo4jTemplate neo4jTemplate = SpringUtils.getBean(Neo4jTemplate.class);
-        return neo4jTemplate.count(wrapper.getCypherCountQuery(), wrapper.getParams());
+        return neo4jTemplate().count(wrapper.getCypherCountQuery(), wrapper.getParams());
     }
 
     /**
-     * 根据节点id删除节点和相关关系
-     *
-     * @param nodeId
+     * 根据节点 id 删除节点及其关系。
      */
     @Query("MATCH (n) WHERE id(n) = $nodeId DETACH DELETE n")
     void deleteNodeById(@Param("nodeId") Long nodeId);
 
     /**
-     * 根据节点id删除节点和相关关系
-     *
-     * @param nodeIds
+     * 根据节点 id 集合删除节点及其关系。
      */
     @Query("MATCH (n) WHERE id(n) IN $nodeIds DETACH DELETE n")
     void deleteNodeByIds(@Param("nodeIds") List<Long> nodeIds);
 
     /**
-     * 根据节点id和属性的id删除属性
-     *
+     * 删除节点的指定属性。
      */
-//    @Query("MATCH (n) WHERE id(n) = $nodeId REMOVE n.$attributeKey RETURN n")
-//    void deleteNodeAttributeById(@Param("nodeId") Long nodeId, @Param("attributeKey") String attributeKey);
-    default void deleteNodeAttributeById(Long nodeId, String attributeKey){
-        Neo4jTemplate neo4jTemplate = SpringUtils.getBean(Neo4jTemplate.class);
+    default void deleteNodeAttributeById(Long nodeId, String attributeKey) {
         Neo4jBuildWrapper<DynamicEntity> wrapper = new Neo4jBuildWrapper<>(DynamicEntity.class);
-        neo4jTemplate.findAll(wrapper.deleteNodeAttribute(nodeId,attributeKey), wrapper.getEntityClass());
+        neo4jTemplate().findAll(wrapper.deleteNodeAttribute(nodeId, attributeKey), wrapper.getEntityClass());
     }
 
     /**
-     * 根据关系id删除关系
-     *
-     * @param relationshipId
+     * 根据关系 id 删除关系。
      */
     @Query("MATCH ()-[r]->() WHERE id(r) = $relationshipId DELETE r")
     void deleteRelationshipById(@Param("relationshipId") Long relationshipId);
 
     /**
-     * 根据关系id集合删除关系
-     *
-     * @param relationshipIds
+     * 根据关系 id 集合删除关系。
      */
     @Query("MATCH ()-[r]->() WHERE id(r) IN $relationshipIds DELETE r")
     void deleteRelationshipsByIds(@Param("relationshipIds") List<Long> relationshipIds);
 
+    private static Neo4jTemplate neo4jTemplate() {
+        return SpringUtils.getBean(Neo4jTemplate.class);
+    }
 
+    private static Neo4jClient neo4jClient() {
+        return SpringUtils.getBean(Neo4jClient.class);
+    }
+
+    private static Node pickNode(Map<String, Object> row) {
+        Object node = row.get("n");
+        if (node instanceof Node) {
+            return (Node) node;
+        }
+        return row.values().stream()
+                .filter(Node.class::isInstance)
+                .map(Node.class::cast)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static Map<String, Object> nodeProperties(Node node) {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("id", node.id());
+        properties.putAll(node.asMap());
+        return properties;
+    }
+
+    private static Optional<Map<String, Object>> relationshipRow(Map<String, Object> row) {
+        Node start = (Node) row.get("n");
+        Node end = (Node) row.get("m");
+        Relationship rel = (Relationship) row.get("r");
+        if (start == null || end == null || rel == null) {
+            return Optional.empty();
+        }
+        return Optional.of(buildRelationshipMap(start, end, rel));
+    }
+
+    private static Optional<Map<String, Object>> relationshipRowWithDirection(Map<String, Object> row) {
+        Node start = (Node) row.get("n");
+        Node end = (Node) row.get("m");
+        Relationship rel = (Relationship) row.get("r");
+        if (start == null || end == null || rel == null) {
+            return Optional.empty();
+        }
+        Map<String, Object> map = new HashMap<>();
+        if (rel.startNodeId() == start.id()) {
+            map.put("startId", start.id());
+            map.put("startName", start.asMap().get("name"));
+            map.put("endId", end.id());
+            map.put("endName", end.asMap().get("name"));
+        } else {
+            map.put("startId", end.id());
+            map.put("startName", end.asMap().get("name"));
+            map.put("endId", start.id());
+            map.put("endName", start.asMap().get("name"));
+        }
+        map.put("id", rel.id());
+        map.put("relationType", rel.type());
+        return Optional.of(map);
+    }
+
+    private static Map<String, Object> buildRelationshipMap(Node start, Node end, Relationship rel) {
+        Map<String, Object> relationshipMap = new HashMap<>();
+        relationshipMap.put("startId", start.id());
+        relationshipMap.put("endId", end.id());
+        relationshipMap.put("startName", start.asMap().get("name"));
+        relationshipMap.put("endName", end.asMap().get("name"));
+        relationshipMap.put("id", rel.id());
+        relationshipMap.put("relationType", rel.type());
+        return relationshipMap;
+    }
+
+    private static String relationKey(Map<String, Object> relMap) {
+        long start = Long.parseLong(relMap.get("startId").toString());
+        long end = Long.parseLong(relMap.get("endId").toString());
+        String type = relMap.get("relationType").toString();
+        long min = Math.min(start, end);
+        long max = Math.max(start, end);
+        return min + "_" + type + "_" + max;
+    }
+
+    @SafeVarargs
+    private static Map<String, Object> mergeParams(Map<String, Object>... maps) {
+        Map<String, Object> combined = new HashMap<>();
+        for (Map<String, Object> map : maps) {
+            if (map != null) {
+                combined.putAll(map);
+            }
+        }
+        return combined;
+    }
+
+    private static Map<String, Object> normalizeParams(Map<String, Object> mergeMap, Map<String, Object> attributeMap) {
+        Map<String, Object> combined = mergeParams(mergeMap, attributeMap);
+        combined.replaceAll((key, value) -> {
+            if (value instanceof java.sql.Date date) {
+                return date.toLocalDate();
+            }
+            if (value instanceof BigDecimal decimal) {
+                return decimal.doubleValue();
+            }
+            if (value instanceof BigInteger integer) {
+                return integer.longValue();
+            }
+            return value;
+        });
+        return combined;
+    }
 }

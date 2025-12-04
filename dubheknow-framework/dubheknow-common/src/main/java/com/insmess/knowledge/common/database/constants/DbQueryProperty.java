@@ -39,46 +39,6 @@ public class DbQueryProperty implements Serializable {
         }
     }
 
-    /**
-     *
-     * @param datasourceType  类型
-     * @param ip  ip
-     * @param port  端口
-     * @param datasourceConfig  配置信息（JSON字符串）
-     */
-    public DbQueryProperty(String datasourceType, String ip, Long port, String datasourceConfig) {
-        if (StringUtils.isEmpty(datasourceType) || StringUtils.isEmpty(ip) || port == null) {
-            throw new DataQueryException("数据库类型、IP和端口号不能为空");
-        }
-        if (StringUtils.isEmpty(datasourceConfig)) {
-            throw new DataQueryException("数据源配置不能为空");
-        }
-        if ( DbType.getDbType(datasourceType) == null ) {
-            throw new DataQueryException("不支持的数据库类型");
-        }
-
-
-        JSONObject configJson;
-        try {
-            configJson = JSON.parseObject(datasourceConfig);
-        } catch (Exception e) {
-            throw new DataQueryException("数据源配置格式错误，应为合法的 JSON");
-        }
-
-        this.dbType = datasourceType;
-        this.host = ip;
-        this.port = port.intValue();
-
-        this.username = configJson.getString("username");
-        this.password = configJson.getString("password");
-        this.sid = configJson.getString("sid");
-        this.dbName = configJson.getString("dbname");
-
-        if (StringUtils.isEmpty(username)) {
-            throw new DataQueryException("数据源配置中必须包含 username");
-        }
-    }
-
     public String trainToJdbcUrl() {
         String url = DbType.getDbType(this.getDbType()).getUrl();
         if (StringUtils.isEmpty(url)) {

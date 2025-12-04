@@ -18,6 +18,14 @@ import com.insmess.knowledge.module.graph.dao.po.ontology.GraphSchemaMappingPO;
 public interface GraphSchemaMappingService extends IService<GraphSchemaMappingPO> {
 
     /**
+     * 根据任务编号获得概念映射列表
+     *
+     * @param taskId 任务编号
+     * @return 概念映射列表
+     */
+    List<GraphSchemaMappingPO> listByTaskId(Long taskId);
+
+    /**
      * 获得概念映射分页列表
      *
      * @param pageReqVO 分页请求

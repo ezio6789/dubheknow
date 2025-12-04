@@ -12,7 +12,7 @@ import java.io.Serializable;
  * 数据源 Response VO 对象 knowbase_datasource
  *
  * @author insmess
- * @date 2025-12-03
+ * @date 2025-12-04
  */
 @Schema(description = "数据源 Response VO")
 @Data
@@ -32,29 +32,41 @@ public class KnowbaseDatasourceRespVO implements Serializable {
     @Schema(description = "数据源类型", example = "")
     private String datasourceType;
 
-    @Excel(name = "数据源配置(json字符串)")
-    @Schema(description = "数据源配置(json字符串)", example = "")
-    private String datasourceConfig;
-
-    @Excel(name = "IP地址")
-    @Schema(description = "IP地址", example = "")
-    private String ip;
+    @Excel(name = "主机地址")
+    @Schema(description = "主机地址", example = "")
+    private String host;
 
     @Excel(name = "端口号")
     @Schema(description = "端口号", example = "")
     private Long port;
 
+    @Excel(name = "用户名")
+    @Schema(description = "用户名", example = "")
+    private String username;
+
+    @Excel(name = "密码")
+    @Schema(description = "密码", example = "")
+    private String password;
+
     @Excel(name = "描述")
     @Schema(description = "描述", example = "")
     private String description;
 
+    @Excel(name = "数据库名", readConverterExp = "模=式名")
+    @Schema(description = "数据库名", example = "")
+    private String schemaName;
+
+    @Excel(name = "sid oracle数据库")
+    @Schema(description = "sid oracle数据库", example = "")
+    private String sid;
+
     @Excel(name = "是否有效;0：无效，1：有效")
     @Schema(description = "是否有效;0：无效，1：有效", example = "")
-    private Boolean validFlag;
+    private Integer validFlag;
 
     @Excel(name = "删除标志;1：已删除，0：未删除")
     @Schema(description = "删除标志;1：已删除，0：未删除", example = "")
-    private Boolean delFlag;
+    private Integer delFlag;
 
     @Excel(name = "创建人")
     @Schema(description = "创建人", example = "")

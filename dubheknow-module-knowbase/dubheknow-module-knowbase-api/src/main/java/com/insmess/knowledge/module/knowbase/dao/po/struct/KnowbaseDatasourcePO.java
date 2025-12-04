@@ -12,7 +12,7 @@ import com.insmess.knowledge.common.core.domain.BaseEntity;
  * 数据源 PO 对象 knowbase_datasource
  *
  * @author insmess
- * @date 2025-12-03
+ * @date 2025-12-04
  */
 @Data
 @TableName(value = "knowbase_datasource")
@@ -36,24 +36,33 @@ public class KnowbaseDatasourcePO extends BaseEntity {
     /** 数据源类型 */
     private String datasourceType;
 
-    /** 数据源配置(json字符串) */
-    private String datasourceConfig;
-
-    /** IP地址 */
-    private String ip;
+    /** 主机地址 */
+    private String host;
 
     /** 端口号 */
     private Long port;
 
+    /** 用户名 */
+    private String username;
+
+    /** 密码 */
+    private String password;
+
     /** 描述 */
     private String description;
 
+    /** 数据库名（模式名） */
+    private String schemaName;
+
+    /** sid oracle数据库 */
+    private String sid;
+
     /** 是否有效;0：无效，1：有效 */
-    private Boolean validFlag;
+    private Integer validFlag;
 
     /** 删除标志;1：已删除，0：未删除 */
     @TableLogic
-    private Boolean delFlag;
+    private Integer delFlag;
 
 
 }

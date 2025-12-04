@@ -39,10 +39,10 @@ public class GraphStructTaskPO extends BaseEntity {
     private String name;
 
     /** 任务状态 */
-    private String status;
+    private Integer status;
 
     /** 发布状态 */
-    private String publishStatus;
+    private Integer publishStatus;
 
     /** 发布时间 */
     private Date publishTime;

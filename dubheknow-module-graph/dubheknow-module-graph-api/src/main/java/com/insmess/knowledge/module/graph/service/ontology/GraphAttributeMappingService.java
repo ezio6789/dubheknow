@@ -18,6 +18,13 @@ import com.insmess.knowledge.module.graph.dao.po.ontology.GraphAttributeMappingP
 public interface GraphAttributeMappingService extends IService<GraphAttributeMappingPO> {
 
     /**
+     * 获得属性映射列表
+     *
+     * @return 属性映射列表
+     */
+    List<GraphAttributeMappingPO> list(GraphAttributeMappingPageReqVO pageReqVO);
+
+    /**
      * 获得属性映射分页列表
      *
      * @param pageReqVO 分页请求

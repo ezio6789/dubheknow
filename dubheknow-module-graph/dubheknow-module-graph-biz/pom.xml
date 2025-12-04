@@ -11,6 +11,11 @@
     <dependencies>
         <dependency>
             <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-module-knowbase-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
             <artifactId>dubheknow-module-graph-api</artifactId>
         </dependency>
 

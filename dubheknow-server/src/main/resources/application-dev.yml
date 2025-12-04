@@ -33,9 +33,9 @@ spring:
         # 是否启用Druid的监控统计功能
         enabled: true
         # 访问Druid监控页面的用户名
-        loginUsername: qknow
+        loginUsername: dubheknow
         # 访问Druid监控页面的密码
-        loginPassword: qknow123456
+        loginPassword: dubheknow
     dynamic:
       druid:
         # 连接池初始化时创建的连接数量
@@ -111,7 +111,7 @@ kingbase8:
   # JDBC驱动类名
   driver-class-name: com.kingbase8.Driver
   # 主库JDBC连接URL
-  url: jdbc:kingbase8://127.0.0.1:54321/qknow_dev?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=UTC&currentSchema=qknow
+  url: jdbc:kingbase8://127.0.0.1:54321/dubheknow_dev?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=UTC&currentSchema=qknow
   # 主库用户名
   username:
   # 主库密码
@@ -122,7 +122,7 @@ oracle:
   # JDBC驱动类名
   driver-class-name: oracle.jdbc.OracleDriver
   # 主库JDBC连接URL
-  url: jdbc:oracle:thin:@127.0.0.1:1521:xe?oracle.jdbc.timezoneAsRegion=true&oracle.jdbc.defaultTimezone=Asia/Shanghai&currentSchema=ANIVIA
+  url: jdbc:oracle:thin:@127.0.0.1:1521:dubheknow?oracle.jdbc.timezoneAsRegion=true&oracle.jdbc.defaultTimezone=Asia/Shanghai&currentSchema=ANIVIA
   # 主库用户名
   username:
   # 主库密码

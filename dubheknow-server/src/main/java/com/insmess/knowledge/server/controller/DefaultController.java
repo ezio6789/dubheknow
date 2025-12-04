@@ -16,7 +16,7 @@ public class DefaultController {
 
     @RequestMapping({"/dev-api/example/**", "/prod-api/example/**", "/example/**"})
     public AjaxResult example404() {
-        return AjaxResult.error("[示例模块 qknow-module-example - 已禁用]");
+        return AjaxResult.error("[示例模块 dubheknow-module-example - 已禁用]");
     }
 
 }

@@ -80,4 +80,10 @@ public interface GraphStructTaskService extends IService<GraphStructTaskPO> {
      */
     String importGraphStructTask(List<GraphStructTaskRespVO> importExcelList, boolean isUpdateSupport, String operName);
 
+    /**
+     * 执行结构化抽取任务
+     *
+     * @param taskId 结构化抽取任务编号
+     */
+    void executeExtract(Long taskId);
 }

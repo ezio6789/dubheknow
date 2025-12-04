@@ -38,6 +38,11 @@ public class GraphSchemaMappingServiceImpl  extends ServiceImpl<GraphSchemaMappi
     private GraphSchemaMappingMapper graphSchemaMappingMapper;
 
     @Override
+    public List<GraphSchemaMappingPO> listByTaskId(Long taskId) {
+        return list(new QueryWrapper<GraphSchemaMappingPO>().lambda().eq(GraphSchemaMappingPO::getTaskId, taskId));
+    }
+
+    @Override
     public Page<GraphSchemaMappingPO> pageGraphSchemaMapping(GraphSchemaMappingPageReqVO pageReqVO) {
         LambdaQueryWrapperX<GraphSchemaMappingPO> wrapper = queryCondition(pageReqVO);
         //设置分页

@@ -1,13 +1,10 @@
-neo4j:
-  uri: bolt://localhost/:7687
-  user: neo4j
-  password: 123456
-# neo4j日志
+spring:
+  neo4j:
+    uri: bolt://localhost:57687
+    authentication:
+      username: neo4j
+      password: 1234568aA!
 logging:
   level:
-    org:
-      neo4j:
-#        driver: DEBUG
-      springframework:
-        data:
-          neo4j: DEBUG
+    org.neo4j.driver: DEBUG   # 若需调试可开
+    org.springframework.data.neo4j: DEBUG

@@ -113,7 +113,6 @@ public class SysSyncDataServiceImpl implements SysSyncDataService {
             sysUser.setUserName(userName);
             sysUser.setNickName(nickName);
             try {
-                //TODO 多个部门的数据导入不进去 千知平台deptId设置的为Long
                 sysUser.setDeptId(StringUtils.isBlank(deptId) ? null : Long.valueOf(deptId));
             } catch (NumberFormatException e) {
                 e.printStackTrace();
@@ -123,8 +122,7 @@ public class SysSyncDataServiceImpl implements SysSyncDataService {
             sysUser.setPhonenumber(phone);
             sysUser.setStatus(status);
             sysUser.setDelFlag(delFlag);
-//            sysUser.setPassword("qknow@123");
-            sysUser.setPassword(SecurityUtils.encryptPassword("qknow@123"));
+            sysUser.setPassword(SecurityUtils.encryptPassword("123456"));
             sysUser.setRoleId(Long.valueOf(3));
             sysUser.setAuthId(idHubId);
             if (userMap.containsKey(sysUser.getAuthId())) {

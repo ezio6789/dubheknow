@@ -1,6 +1,7 @@
 package com.insmess.knowledge.module.system.controller.admin.system;
 
 import cn.hutool.core.date.DateUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,8 +38,8 @@ public class SystemContentController extends BaseController {
     @Operation(summary = "查询系统配置列表")
     @PreAuthorize("@ss.hasPermi('system:system:content:list')")
     @GetMapping("/system/content/list")
-    public CommonResult<PageResult<SystemContentRespVO>> list(SystemContentPageReqVO systemContent) {
-        PageResult<SystemContentDO> page = systemContentService.getSystemContentPage(systemContent);
+    public CommonResult<Page<SystemContentRespVO>> list(SystemContentPageReqVO systemContent) {
+        Page<SystemContentDO> page = systemContentService.getSystemContentPage(systemContent);
         return CommonResult.success(BeanUtils.toBean(page, SystemContentRespVO.class));
     }
 

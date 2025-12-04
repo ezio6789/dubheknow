@@ -154,6 +154,11 @@ public class GraphRelationMappingServiceImpl  extends ServiceImpl<GraphRelationM
             return resultMsg.toString();
         }
 
+    @Override
+    public List<GraphRelationMappingPO> list(GraphRelationMappingPageReqVO relationMappingPageReqVO) {
+        return list(queryCondition(relationMappingPageReqVO));
+    }
+
     private LambdaQueryWrapperX<GraphRelationMappingPO> queryCondition(GraphRelationMappingPageReqVO pageReqVO) {
         GraphRelationMappingPO graphRelationMappingPO = GraphRelationMappingConvert.INSTANCE.convertToPO(pageReqVO);
         return new LambdaQueryWrapperX<GraphRelationMappingPO>()

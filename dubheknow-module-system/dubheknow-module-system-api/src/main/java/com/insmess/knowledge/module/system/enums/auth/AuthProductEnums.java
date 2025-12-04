@@ -6,7 +6,7 @@ package com.insmess.knowledge.module.system.enums.auth;
  * @author Ming
  */
 public enum AuthProductEnums {
-    ANIVIA(0, "千知平台"),
+    ANIVIA(0, "知识图谱"),
     ALIPAY(1,"支付宝"),
     WECHAT(2,"微信");
 

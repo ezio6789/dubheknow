@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Collection;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.insmess.knowledge.common.core.domain.AjaxResult;
 import com.insmess.knowledge.module.knowbase.vo.struct.KnowbaseDatasourceSaveReqVO;
 import com.insmess.knowledge.module.knowbase.vo.struct.KnowbaseDatasourcePageReqVO;
 import com.insmess.knowledge.module.knowbase.vo.struct.KnowbaseDatasourceRespVO;
@@ -13,7 +14,7 @@ import com.insmess.knowledge.module.knowbase.dao.po.struct.KnowbaseDatasourcePO;
  * 数据源Service接口
  *
  * @author insmess
- * @date 2025-12-03
+ * @date 2025-12-04
  */
 public interface KnowbaseDatasourceService extends IService<KnowbaseDatasourcePO> {
 
@@ -80,4 +81,10 @@ public interface KnowbaseDatasourceService extends IService<KnowbaseDatasourcePO
      */
     String importKnowbaseDatasource(List<KnowbaseDatasourceRespVO> importExcelList, boolean isUpdateSupport, String operName);
 
+    /**
+     * 测试数据源连接
+     *
+     * @param id 数据源编号
+     */
+    void testConnection(Long id);
 }

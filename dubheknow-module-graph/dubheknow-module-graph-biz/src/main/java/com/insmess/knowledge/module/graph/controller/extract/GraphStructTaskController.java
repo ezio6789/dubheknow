@@ -43,6 +43,14 @@ public class GraphStructTaskController extends BaseController {
     @Resource
     private GraphStructTaskService graphStructTaskService;
 
+    @Operation(summary = "执行结构化抽取任务")
+    @PreAuthorize("@ss.hasPermi('graph:extract:structtask:list')")
+    @GetMapping("/executeExtract")
+    public CommonResult<Page<GraphStructTaskRespVO>> executeExtract(Long taskId) {
+        graphStructTaskService.executeExtract(taskId);
+        return CommonResult.success(null);
+    }
+
     @Operation(summary = "查询结构化抽取任务列表")
     @PreAuthorize("@ss.hasPermi('graph:extract:structtask:list')")
     @GetMapping("/list")

@@ -9,228 +9,153 @@ import org.neo4j.driver.Value;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-
-/**
- * 图谱转换器
- *
- * @author wang
- * @date 2025/03/11 17:50
- **/
 public class Convert {
 
+    private Convert() {
+    }
 
-    /**
-     * 核心转换逻辑：处理 Neo4j 的 Value 类型
-     */
     public static Object convertNeo4jValue(Value value) {
         if (value == null || value.isNull()) {
             return null;
         }
-        String typeName = value.type().name();
-        switch (typeName) {
-            case "STRING":
-                return value.asString();
-            case "INTEGER":
-                return value.asNumber();
-            case "FLOAT":
-            case "DOUBLE":
-                return value.asDouble();
-            case "BOOLEAN":
-                return value.asBoolean();
-            default:
-                return value.asObject();
-        }
+        return switch (value.type().name()) {
+            case "STRING" -> value.asString();
+            case "INTEGER" -> value.asNumber();
+            case "FLOAT", "DOUBLE" -> value.asDouble();
+            case "BOOLEAN" -> value.asBoolean();
+            default -> value.asObject();
+        };
     }
 
-
     public static JSONObject toJSONObject(List<?> entityList) {
-        JSONObject jsonObject = new JSONObject();
-        try {
-            JSONArray entities = new JSONArray(); // 实体
-            JSONArray relationships = new JSONArray(); // 关系
-            for (Object entity : entityList) {
-                // 处理实体信息
-                JSONObject entityJson = new JSONObject();
-                Field idField = getField(entity.getClass(), "id");
-                assert idField != null;
-                idField.setAccessible(true);
-                Object id = idField.get(entity);
-                entityJson.put("id", id);
+        JSONObject graph = emptyGraphJson();
+        JSONArray entities = graph.getJSONArray("entities");
+        JSONArray relationships = graph.getJSONArray("relationships");
 
-                Field nameField = getField(entity.getClass(), "name");
-                if (nameField != null) {
-                    nameField.setAccessible(true);
-                    Object name = nameField.get(entity);
+        for (Object entity : entityList) {
+            try {
+                Object id = readField(entity, "id");
+                Object name = readField(entity, "name");
+
+                JSONObject entityJson = new JSONObject();
+                entityJson.put("id", id);
+                if (name != null) {
                     entityJson.put("name", name);
                 }
-//                entities.add(entityJson);
-                add(entities, entityJson);//添加并判断重复
+                addIfMissing(entities, entityJson);
 
-                // 处理关系信息
-                Field relationshipMapField = getField(entity.getClass(), "relationshipEntityMap");
-                if (relationshipMapField != null) {
-                    relationshipMapField.setAccessible(true);
-                    Map<String, List<?>> relationshipMap = (Map<String, List<?>>) relationshipMapField.get(entity);
-                    if (relationshipMap != null) {
-                        for (Map.Entry<String, List<?>> entry : relationshipMap.entrySet()) {
-                            String relationshipName = entry.getKey();
-                            for (Object relObject : entry.getValue()) {
-                                // 直接处理GraphEntityRelationship对象
-                                Field endNodeField = getField(relObject.getClass(), "endNode");
-                                if (endNodeField != null) {
-                                    endNodeField.setAccessible(true);
-                                    Object endNode = endNodeField.get(relObject);
-                                    Field relationshipId = getField(relObject.getClass(), "id");
-                                    assert relationshipId != null;
-                                    relationshipId.setAccessible(true);
-                                    JSONObject relationshipJson = new JSONObject();
-                                    relationshipJson.put("id", relationshipId.get(relObject));
-                                    relationshipJson.put("startId", id);
-                                    if (nameField != null) {
-                                        relationshipJson.put("startName", nameField.get(entity));
-                                    }
+                Map<String, List<?>> relationMap = castRelationshipMap(readField(entity, "relationshipEntityMap"));
+                if (relationMap == null) {
+                    continue;
+                }
+                for (Map.Entry<String, List<?>> entry : relationMap.entrySet()) {
+                    String relationName = entry.getKey();
+                    for (Object relObject : entry.getValue()) {
+                        Object relId = readField(relObject, "id");
+                        Object endNode = readField(relObject, "endNode");
 
-                                    if (endNode != null) {
-                                        Field endIdField = getField(endNode.getClass(), "id");
-                                        endIdField.setAccessible(true);
-                                        Long endId = (Long) endIdField.get(endNode);
-                                        relationshipJson.put("endId", endId);
-
-                                        Field endNameField = getField(endNode.getClass(), "name");
-                                        if (endNameField != null) {
-                                            endNameField.setAccessible(true);
-                                            relationshipJson.put("endName", endNameField.get(endNode));
-                                        }
-                                    }
-                                    relationshipJson.put("relationType", relationshipName);
-//                                    relationships.add(relationshipJson);
-                                    add(relationships, relationshipJson);
-                                }
+                        JSONObject relJson = new JSONObject();
+                        relJson.put("id", relId);
+                        relJson.put("relationType", relationName);
+                        relJson.put("startId", id);
+                        relJson.put("startName", name);
+                        if (endNode != null) {
+                            Object endId = readField(endNode, "id");
+                            Object endName = readField(endNode, "name");
+                            relJson.put("endId", endId);
+                            if (endName != null) {
+                                relJson.put("endName", endName);
                             }
                         }
+                        addIfMissing(relationships, relJson);
                     }
                 }
-
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("Failed to convert entity to JSON", e);
             }
-            jsonObject.put("entities", entities);
-            jsonObject.put("relationships", relationships);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
-        return jsonObject;
+        return graph;
     }
 
     public static JSONObject toDynamicEntityJSONObject(List<DynamicEntity> entityList) {
-        JSONObject jsonObject = new JSONObject();
-        try {
-            JSONArray entities = new JSONArray(); // 实体
-            JSONArray relationships = new JSONArray(); // 关系
-            for (DynamicEntity entity : entityList) {
-                // 处理实体信息
-                JSONObject entityJson = new JSONObject();
-//                Field idField = getField(entity.getClass(), "id");
-//                assert idField != null;
-//                idField.setAccessible(true);
-//                Object id = idField.get(entity);
-//                entityJson.put("id", id);
-                Long id = entity.getId();
-                entityJson.put("id", id);
-                Map<String, Object> dynamicProperties = entity.getDynamicProperties();
-                for (Map.Entry<String, Object> entry : dynamicProperties.entrySet()) {
-                    String snakeKey = entry.getKey();
-                    String camelKey = snakeToCamel(snakeKey);
-                    if (entry.getValue() instanceof Value value) {
-                        entityJson.put(camelKey, value.asObject());
-                    } else {
-                        entityJson.put(camelKey, entry.getValue());
-                    }
-                }
-                if (!containsId(entities, entity.getId())) {
-//                    entities.add(entityJson);
-                    add(entities, entityJson);//添加并判断重复
-                }
+        JSONObject graph = emptyGraphJson();
+        JSONArray entities = graph.getJSONArray("entities");
+        JSONArray relationships = graph.getJSONArray("relationships");
 
-                Map<String, List<DynamicEntityRelationship>> relationshipMap = entity.getRelationshipEntityMap();
-                if (relationshipMap != null) {
-                    for (Map.Entry<String, List<DynamicEntityRelationship>> entry : relationshipMap.entrySet()) {
-                        String relationshipName = entry.getKey();
-                        for (DynamicEntityRelationship relObject : entry.getValue()) {
+        for (DynamicEntity entity : entityList) {
+            JSONObject entityJson = new JSONObject();
+            entityJson.put("id", entity.getId());
+            copyDynamicProperties(entityJson, entity.getDynamicProperties());
+            addIfMissing(entities, entityJson);
 
-                            JSONObject json = new JSONObject();
-                            DynamicEntity endNode = relObject.getEndNode();
-                            Long endId = endNode.getId();
-                            json.put("id", endId);
-                            Map<String, Object> dynamicProperties2 = endNode.getDynamicProperties();
-                            for (Map.Entry<String, Object> entry2 : dynamicProperties2.entrySet()) {
-                                String snakeKey = entry2.getKey();
-                                String camelKey = snakeToCamel(snakeKey);
-                                if (entry2.getValue() instanceof Value) {
-                                    json.put(camelKey, ((Value) entry2.getValue()).asObject());
-                                } else {
-                                    json.put(camelKey, entry2.getValue());
-                                }
-                            }
-//                            entities.add(json);
-//                            add(entities, json);
-                            //封装关系
-                            JSONObject relationshipJson = new JSONObject();
-                            relationshipJson.put("id", relObject.getId());
-                            Map<String, Object> map = endNode.getDynamicProperties();
-                            String name;
-                            if (map.get("name") instanceof Value) {
-                                name = ((Value) map.get("name")).asString();
-                            } else {
-                                name = map.get("name").toString();
-                            }
-                            if (relObject.getDirection().equals("OUT")) {
-                                relationshipJson.put("startId", id);
-                                relationshipJson.put("startName", entityJson.get("name"));
-                                relationshipJson.put("endId", endId);
-                                relationshipJson.put("endName", name);
-                            } else {
-                                relationshipJson.put("startId", endId);
-                                relationshipJson.put("startName", name);
-                                relationshipJson.put("endId", id);
-                                relationshipJson.put("endName", entityJson.get("name"));
-                            }
-                            relationshipJson.put("relationType", relationshipName);
-//                            relationships.add(relationshipJson);
-                            add(relationships, relationshipJson);
-                        }
-                    }
+            Map<String, List<DynamicEntityRelationship>> relationMap = entity.getRelationshipEntityMap();
+            if (relationMap == null) {
+                continue;
+            }
+            for (Map.Entry<String, List<DynamicEntityRelationship>> entry : relationMap.entrySet()) {
+                String relationName = entry.getKey();
+                for (DynamicEntityRelationship relObject : entry.getValue()) {
+                    DynamicEntity endNode = relObject.getEndNode();
+
+                    JSONObject endNodeJson = new JSONObject();
+                    endNodeJson.put("id", endNode.getId());
+                    copyDynamicProperties(endNodeJson, endNode.getDynamicProperties());
+                    addIfMissing(entities, endNodeJson);
+
+                    JSONObject relJson = new JSONObject();
+                    relJson.put("id", relObject.getId());
+                    relJson.put("relationType", relationName);
+
+                    boolean outgoing = "OUT".equals(relObject.getDirection());
+                    relJson.put("startId", outgoing ? entity.getId() : endNode.getId());
+                    relJson.put("endId", outgoing ? endNode.getId() : entity.getId());
+                    relJson.put("startName", outgoing ? entityJson.get("name") : endNodeJson.get("name"));
+                    relJson.put("endName", outgoing ? endNodeJson.get("name") : entityJson.get("name"));
+
+                    addIfMissing(relationships, relJson);
                 }
             }
-            jsonObject.put("entities", entities);
-            jsonObject.put("relationships", relationships);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
         }
+        return graph;
+    }
+
+    private static JSONObject emptyGraphJson() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("entities", new JSONArray());
+        jsonObject.put("relationships", new JSONArray());
         return jsonObject;
     }
 
-    /**
-     * 添加实体，如果已经存在，则不添加
-     */
-    private static void add(JSONArray entities, JSONObject entity) {
+    private static void addIfMissing(JSONArray entities, JSONObject entity) {
         if (!containsId(entities, entity.get("id"))) {
             entities.add(entity);
         }
     }
 
-    /**
-     * 判断该id的对象在entities中是否存在
-     *
-     * @param entities
-     * @param id
-     * @return
-     */
+    private static void copyDynamicProperties(JSONObject target, Map<String, Object> properties) {
+        if (properties == null) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            String camelKey = snakeToCamel(entry.getKey());
+            target.put(camelKey, unwrapDynamicValue(entry.getValue()));
+        }
+    }
+
+    private static Object unwrapDynamicValue(Object value) {
+        if (value instanceof Value neo4jValue) {
+            return convertNeo4jValue(neo4jValue);
+        }
+        return value;
+    }
+
     private static boolean containsId(JSONArray entities, Object id) {
         for (Object entity : entities) {
-            if (entity instanceof JSONObject) {
-                JSONObject jsonObject = (JSONObject) entity;
-                if (jsonObject.get("id").equals(id)) {
+            if (entity instanceof JSONObject jsonObject) {
+                Object existingId = jsonObject.get("id");
+                if (Objects.equals(existingId, id)) {
                     return true;
                 }
             }
@@ -238,7 +163,7 @@ public class Convert {
         return false;
     }
 
-    private static Field getField(Class<?> clazz, String fieldName) {
+    private static Field findField(Class<?> clazz, String fieldName) {
         try {
             return clazz.getDeclaredField(fieldName);
         } catch (NoSuchFieldException e) {
@@ -246,7 +171,21 @@ public class Convert {
         }
     }
 
-    // 将驼峰式命名转换为下划线分隔的命名
+    private static Object readField(Object target, String fieldName) throws IllegalAccessException {
+        Field field = findField(target.getClass(), fieldName);
+        if (field == null) {
+            return null;
+        }
+        field.setAccessible(true);
+        return field.get(target);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, List<?>> castRelationshipMap(Object relationshipMap) {
+        return (Map<String, List<?>>) relationshipMap;
+    }
+
+    // camelCase -> snake_case
     public static String camelToSnake(String camelStr) {
         StringBuilder snakeStr = new StringBuilder();
         for (int i = 0; i < camelStr.length(); i++) {
@@ -259,12 +198,18 @@ public class Convert {
         return snakeStr.toString();
     }
 
-    // 将下划线分隔的命名转换为驼峰式命名
+    // snake_case -> camelCase
     public static String snakeToCamel(String snakeStr) {
         String[] components = snakeStr.split("_");
+        if (components.length == 0) {
+            return snakeStr;
+        }
         StringBuilder camelCase = new StringBuilder(components[0]);
         for (int i = 1; i < components.length; i++) {
             String component = components[i];
+            if (component.isEmpty()) {
+                continue;
+            }
             camelCase.append(Character.toUpperCase(component.charAt(0)));
             camelCase.append(component.substring(1));
         }

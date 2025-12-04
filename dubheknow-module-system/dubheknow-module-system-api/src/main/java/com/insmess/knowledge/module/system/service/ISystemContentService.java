@@ -1,5 +1,6 @@
 package com.insmess.knowledge.module.system.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.insmess.knowledge.common.core.page.PageResult;
 import com.insmess.knowledge.module.system.domain.SystemContentDO;
@@ -25,7 +26,7 @@ public interface ISystemContentService extends IService<SystemContentDO> {
      * @param pageReqVO 分页请求
      * @return 系统配置分页列表
      */
-    PageResult<SystemContentDO> getSystemContentPage(SystemContentPageReqVO pageReqVO);
+    Page<SystemContentDO> getSystemContentPage(SystemContentPageReqVO pageReqVO);
 
     /**
      * 创建系统配置

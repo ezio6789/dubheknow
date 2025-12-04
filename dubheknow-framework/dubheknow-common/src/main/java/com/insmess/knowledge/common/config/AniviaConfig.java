@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
  * @author insmess
  */
 @Component
-@ConfigurationProperties(prefix = "qknow")
+@ConfigurationProperties(prefix = "dubheknow")
 public class AniviaConfig
 {
     /** 项目名称 */

@@ -1,11 +1,15 @@
 package com.insmess.knowledge.module.knowbase.service.struct.impl;
 
+import java.sql.Connection;
 import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.insmess.knowledge.common.database.DataSourceFactory;
+import com.insmess.knowledge.common.database.DbQuery;
+import com.insmess.knowledge.common.database.constants.DbQueryProperty;
 import com.insmess.knowledge.mybatis.core.query.LambdaQueryWrapperX;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +40,8 @@ import com.insmess.knowledge.module.knowbase.service.struct.KnowbaseDatasourceSe
 public class KnowbaseDatasourceServiceImpl  extends ServiceImpl<KnowbaseDatasourceMapper,KnowbaseDatasourcePO> implements KnowbaseDatasourceService {
     @Resource
     private KnowbaseDatasourceMapper knowbaseDatasourceMapper;
+    @Resource
+    private DataSourceFactory dataSourceFactory;
 
     @Override
     public Page<KnowbaseDatasourcePO> pageKnowbaseDatasource(KnowbaseDatasourcePageReqVO pageReqVO) {
@@ -154,13 +160,32 @@ public class KnowbaseDatasourceServiceImpl  extends ServiceImpl<KnowbaseDatasour
             return resultMsg.toString();
         }
 
+    @Override
+    public void testConnection(Long id) {
+        KnowbaseDatasourcePO datasource = getById(id);
+        //获取数据源信息
+        DbQueryProperty dbQueryProperty = new DbQueryProperty(
+                datasource.getDatasourceType(),
+                datasource.getHost(),
+                datasource.getUsername(),
+                datasource.getPassword(),
+                datasource.getPort().intValue(),
+                datasource.getSchemaName(),
+                datasource.getSid()
+        );
+        DbQuery dbQuery = dataSourceFactory.createDbQuery(dbQueryProperty);
+        try (Connection con = dbQuery.getConnection()) {
+
+        } catch (Exception e) {
+            throw new ServiceException("数据源连接失败：" + e.getMessage());
+        }
+    }
+
     private LambdaQueryWrapperX<KnowbaseDatasourcePO> queryCondition(KnowbaseDatasourcePageReqVO pageReqVO) {
         KnowbaseDatasourcePO knowbaseDatasourcePO = KnowbaseDatasourceConvert.INSTANCE.convertToPO(pageReqVO);
         return new LambdaQueryWrapperX<KnowbaseDatasourcePO>()
                 .likeIfPresent(KnowbaseDatasourcePO::getDatasourceName, knowbaseDatasourcePO.getDatasourceName())
                 .eqIfPresent(KnowbaseDatasourcePO::getDatasourceType, knowbaseDatasourcePO.getDatasourceType())
-                .eqIfPresent(KnowbaseDatasourcePO::getDatasourceConfig, knowbaseDatasourcePO.getDatasourceConfig())
-                .eqIfPresent(KnowbaseDatasourcePO::getIp, knowbaseDatasourcePO.getIp())
                 .eqIfPresent(KnowbaseDatasourcePO::getPort, knowbaseDatasourcePO.getPort())
                 .eqIfPresent(KnowbaseDatasourcePO::getDescription, knowbaseDatasourcePO.getDescription())
                 .eqIfPresent(KnowbaseDatasourcePO::getCreateTime, knowbaseDatasourcePO.getCreateTime())

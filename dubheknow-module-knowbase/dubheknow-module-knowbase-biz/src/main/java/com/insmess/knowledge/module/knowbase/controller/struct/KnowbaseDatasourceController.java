@@ -43,6 +43,18 @@ public class KnowbaseDatasourceController extends BaseController {
     @Resource
     private KnowbaseDatasourceService knowbaseDatasourceService;
 
+    @Operation(summary = "测试连接")
+    @PreAuthorize("@ss.hasPermi('knowbase:struct:datasource:list')")
+    @GetMapping("/testConnection/{id}")
+    public CommonResult testConnection(@PathVariable("id") Long id) {
+        try {
+            knowbaseDatasourceService.testConnection(id);
+            return CommonResult.success(null);
+        } catch (Exception e) {
+            return CommonResult.error(GlobalErrorCodeConstants.BAD_REQUEST);
+        }
+    }
+
     @Operation(summary = "查询数据源列表")
     @PreAuthorize("@ss.hasPermi('knowbase:struct:datasource:list')")
     @GetMapping("/list")

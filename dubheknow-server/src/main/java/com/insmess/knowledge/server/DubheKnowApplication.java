@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.data.neo4j.repository.config.EnableNeo4jRepositories;
 
 /**
  * 启动程序
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
  */
 @EnableFileStorage
 @ComponentScan(basePackages = {"com.insmess.knowledge"})
+@EnableNeo4jRepositories(basePackages = "com.insmess.knowledge")
 @SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 public class DubheKnowApplication

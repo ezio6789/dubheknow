@@ -5,6 +5,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.annotation.Resource;
 import com.insmess.knowledge.common.core.page.PageResult;
@@ -36,8 +39,19 @@ public class SystemContentServiceImpl  extends ServiceImpl<SystemContentMapper, 
     private SystemContentMapper systemContentMapper;
 
     @Override
-    public PageResult<SystemContentDO> getSystemContentPage(SystemContentPageReqVO pageReqVO) {
-        return systemContentMapper.selectPage(pageReqVO);
+    public Page<SystemContentDO> getSystemContentPage(SystemContentPageReqVO pageReqVO) {
+        LambdaQueryWrapper<SystemContentDO> qw = new QueryWrapper<SystemContentDO>().lambda()
+                .like(SystemContentDO::getSysName, pageReqVO.getSysName())
+                .eq(StringUtils.isNotEmpty(pageReqVO.getLogo()), SystemContentDO::getLogo, pageReqVO.getLogo())
+                .eq(StringUtils.isNotEmpty(pageReqVO.getCarouselImage()), SystemContentDO::getCarouselImage, pageReqVO.getCarouselImage())
+                .eq(StringUtils.isNotEmpty(pageReqVO.getContactNumber()), SystemContentDO::getContactNumber, pageReqVO.getContactNumber())
+                .eq(StringUtils.isNotEmpty(pageReqVO.getEmail()), SystemContentDO::getEmail, pageReqVO.getEmail())
+                .eq(StringUtils.isNotEmpty(pageReqVO.getCopyright()), SystemContentDO::getCopyright, pageReqVO.getCopyright())
+                .eq(StringUtils.isNotEmpty(pageReqVO.getRecordNumber()), SystemContentDO::getRecordNumber, pageReqVO.getRecordNumber())
+                .eq(pageReqVO.getStatus() != null, SystemContentDO::getStatus, pageReqVO.getStatus())
+                .orderByAsc(SystemContentDO::getCreateTime);
+        Page<SystemContentDO> page = new Page<>(pageReqVO.getPageNum(), pageReqVO.getPageSize());
+        return systemContentMapper.selectPage(page, qw);
     }
 
     @Override
@@ -68,12 +82,12 @@ public class SystemContentServiceImpl  extends ServiceImpl<SystemContentMapper, 
 
     @Override
     public List<SystemContentDO> getSystemContentList() {
-        return systemContentMapper.selectList();
+        return systemContentMapper.selectList(null);
     }
 
     @Override
     public Map<Long, SystemContentDO> getSystemContentMap() {
-        List<SystemContentDO> systemContentList = systemContentMapper.selectList();
+        List<SystemContentDO> systemContentList = systemContentMapper.selectList(null);
         return systemContentList.stream()
                 .collect(Collectors.toMap(
                         SystemContentDO::getId,

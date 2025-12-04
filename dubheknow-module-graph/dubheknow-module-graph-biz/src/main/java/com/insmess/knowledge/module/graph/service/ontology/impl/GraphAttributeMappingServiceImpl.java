@@ -38,6 +38,11 @@ public class GraphAttributeMappingServiceImpl  extends ServiceImpl<GraphAttribut
     private GraphAttributeMappingMapper graphAttributeMappingMapper;
 
     @Override
+    public List<GraphAttributeMappingPO> list(GraphAttributeMappingPageReqVO pageReqVO) {
+        return list(queryCondition(pageReqVO));
+    }
+
+    @Override
     public Page<GraphAttributeMappingPO> pageGraphAttributeMapping(GraphAttributeMappingPageReqVO pageReqVO) {
         LambdaQueryWrapperX<GraphAttributeMappingPO> wrapper = queryCondition(pageReqVO);
         //设置分页
