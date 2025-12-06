@@ -14,9 +14,16 @@
             <artifactId>dubheknow-module-knowbase-api</artifactId>
         </dependency>
 
+
         <dependency>
             <groupId>com.insmess.knowledge</groupId>
             <artifactId>dubheknow-module-graph-api</artifactId>
+        </dependency>
+
+        <!-- 数据库模块-->
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-database</artifactId>
         </dependency>
 
         <!-- 核心模块 config-->

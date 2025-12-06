@@ -75,6 +75,11 @@
             </dependency>
             <dependency>
                 <groupId>com.insmess.knowledge</groupId>
+                <artifactId>dubheknow-database</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.insmess.knowledge</groupId>
                 <artifactId>dubheknow-common</artifactId>
                 <version>${revision}</version>
             </dependency>

@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.insmess.knowledge.common.database.DataSourceFactory;
-import com.insmess.knowledge.common.database.DbQuery;
-import com.insmess.knowledge.common.database.constants.DbQueryProperty;
+import com.insmess.knowledge.database.DataSourceFactory;
+import com.insmess.knowledge.database.DbQuery;
+import com.insmess.knowledge.database.constants.DbQueryProperty;
 import com.insmess.knowledge.mybatis.core.query.LambdaQueryWrapperX;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;

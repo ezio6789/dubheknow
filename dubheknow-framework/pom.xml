@@ -26,6 +26,7 @@
         <module>dubheknow-websocket</module>
         <module>dubheknow-langchain4j</module>
         <module>dubheknow-milvus</module>
+        <module>dubheknow-database</module>
     </modules>
 
 </project>

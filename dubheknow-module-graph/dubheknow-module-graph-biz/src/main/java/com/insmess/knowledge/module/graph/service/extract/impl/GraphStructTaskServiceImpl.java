@@ -7,28 +7,27 @@ import java.util.stream.Collectors;
 import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.insmess.knowledge.common.database.DataSourceFactory;
-import com.insmess.knowledge.common.database.DbQuery;
-import com.insmess.knowledge.common.database.constants.DbQueryProperty;
+import com.insmess.knowledge.database.DataSourceFactory;
+import com.insmess.knowledge.database.DbQuery;
+import com.insmess.knowledge.database.constants.DbQueryProperty;
 import com.insmess.knowledge.module.graph.dao.po.extract.neo4j.GraphExtractionEntity;
 import com.insmess.knowledge.module.graph.dao.po.extract.neo4j.GraphExtractionMergeDO;
 import com.insmess.knowledge.module.graph.dao.po.ontology.GraphAttributeMappingPO;
+import com.insmess.knowledge.module.graph.dao.po.ontology.GraphConceptMappingPO;
 import com.insmess.knowledge.module.graph.dao.po.ontology.GraphRelationMappingPO;
-import com.insmess.knowledge.module.graph.dao.po.ontology.GraphSchemaMappingPO;
 import com.insmess.knowledge.module.graph.enums.ExtTaskStatus;
 import com.insmess.knowledge.module.graph.enums.ReleaseStatus;
 import com.insmess.knowledge.module.graph.repository.GraphNeo4jRepository;
 import com.insmess.knowledge.module.graph.service.ontology.GraphAttributeMappingService;
 import com.insmess.knowledge.module.graph.service.ontology.GraphRelationMappingService;
-import com.insmess.knowledge.module.graph.service.ontology.GraphSchemaMappingService;
+import com.insmess.knowledge.module.graph.service.ontology.GraphConceptMappingService;
+import com.insmess.knowledge.module.graph.vo.extract.GraphStructTaskSaveRelationVO;
 import com.insmess.knowledge.module.graph.vo.ontology.GraphAttributeMappingPageReqVO;
-import com.insmess.knowledge.module.graph.vo.ontology.GraphAttributeMappingRespVO;
 import com.insmess.knowledge.module.graph.vo.ontology.GraphRelationMappingPageReqVO;
 import com.insmess.knowledge.module.knowbase.dao.po.struct.KnowbaseDatasourcePO;
 import com.insmess.knowledge.module.knowbase.service.struct.KnowbaseDatasourceService;
 import com.insmess.knowledge.mybatis.core.query.LambdaQueryWrapperX;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.insmess.knowledge.neo4j.domain.DynamicEntity;
 import com.insmess.knowledge.neo4j.enums.Neo4jLabelEnum;
 import com.insmess.knowledge.neo4j.wrapper.Neo4jBuildWrapper;
 import lombok.extern.slf4j.Slf4j;
@@ -68,13 +67,14 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
     private KnowbaseDatasourceService knowbaseDatasourceService;
 
     @Resource
-    private GraphSchemaMappingService graphSchemaMappingService;
+    private GraphConceptMappingService graphConceptMappingService;
 
     @Resource
     private GraphAttributeMappingService graphAttributeMappingService;
 
     @Resource
     private DataSourceFactory dataSourceFactory;
+
     @Autowired
     private GraphRelationMappingService graphRelationMappingService;
 
@@ -90,6 +90,73 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
     public Long saveGraphStructTask(GraphStructTaskSaveReqVO saveReqVO) {
         GraphStructTaskPO graphStructTaskPO = GraphStructTaskConvert.INSTANCE.convertToPO(saveReqVO);
         graphStructTaskMapper.insert(graphStructTaskPO);
+        //添加映射关系
+        List<GraphStructTaskSaveRelationVO.TableData> tableDatas = saveReqVO.getTableData();
+        for (GraphStructTaskSaveRelationVO.TableData tableData : tableDatas) {
+            //未映射不处理
+            if ("1".equals(tableData.getStatus())) {
+                break;
+            }
+            GraphStructTaskSaveRelationVO.MappingData mappingData = tableData.getMappingData();
+            //概念映射
+            GraphConceptMappingPO graphConceptMappingPO = new GraphConceptMappingPO();
+            graphConceptMappingPO.setTaskId(graphStructTaskPO.getId());
+            graphConceptMappingPO.setTableName(tableData.getTableName());
+            graphConceptMappingPO.setTableComment(tableData.getTableComment());
+            graphConceptMappingPO.setEntityNameField(mappingData.getEntityNameField());
+            graphConceptMappingPO.setConceptId(mappingData.getConceptId());
+            graphConceptMappingPO.setConceptName(mappingData.getConceptName());
+            graphConceptMappingService.save(graphConceptMappingPO);
+            //属性映射
+            List<GraphStructTaskSaveRelationVO.Attribute> attributes = mappingData.getAttributeList();
+            attributes.stream().filter(attribute -> attribute.getConceptId() != null).collect(Collectors.toList());
+            List<GraphAttributeMappingPO> attributeMappingPOS = new ArrayList<>();
+            for (GraphStructTaskSaveRelationVO.Attribute attribute : attributes) {
+                GraphAttributeMappingPO graphAttributeMappingPO = new GraphAttributeMappingPO();
+                graphAttributeMappingPO.setTaskId(graphStructTaskPO.getId());
+                graphAttributeMappingPO.setTableName(tableData.getTableName());
+                graphAttributeMappingPO.setTableComment(tableData.getTableComment());
+                graphAttributeMappingPO.setFieldName(attribute.getField());
+                graphAttributeMappingPO.setFieldComment(attribute.getFieldDescription());
+                graphAttributeMappingPO.setAttributeId(attribute.getConceptId());
+                graphAttributeMappingPO.setAttributeName(attribute.getConceptName());
+                attributeMappingPOS.add(graphAttributeMappingPO);
+            }
+            graphAttributeMappingService.saveBatch(attributeMappingPOS);
+            //关系映射
+            List<GraphStructTaskSaveRelationVO.Relationship> relationshipList = mappingData.getRelationshipList();
+            List<GraphRelationMappingPO> relationMappingPOS = new ArrayList<>();
+            relationshipList = relationshipList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getField())
+                            && StringUtils.isNotBlank(e.getRelation())
+                            && StringUtils.isNotBlank(e.getAssociationTable())
+                            && StringUtils.isNotBlank(e.getAssociationTableField())
+                            && StringUtils.isNotBlank(e.getAssociationTableEntityField())
+                    ).collect(Collectors.toList());
+            for (GraphStructTaskSaveRelationVO.Relationship relationship : relationshipList) {
+                if (StringUtils.isBlank(relationship.getField()) || StringUtils.isBlank(relationship.getRelation())
+                        || StringUtils.isBlank(relationship.getAssociationTable()) || StringUtils.isBlank(relationship.getAssociationTableField())) {
+                    break;
+                }
+                GraphRelationMappingPO graphRelationMappingPO = new GraphRelationMappingPO();
+                graphRelationMappingPO.setTaskId(graphStructTaskPO.getId());
+                graphRelationMappingPO.setTableName(tableData.getTableName());
+                graphRelationMappingPO.setTableComment(tableData.getTableComment());
+                graphRelationMappingPO.setFieldName(relationship.getField());
+                graphRelationMappingPO.setFieldComment("保留");
+                graphRelationMappingPO.setRelation(relationship.getRelation());
+                graphRelationMappingPO.setRelationTable(relationship.getAssociationTable());
+                for (GraphStructTaskSaveRelationVO.TableData subTableData : tableDatas) {
+                    if (subTableData.getTableName().equals(relationship.getAssociationTable())) {
+                        graphRelationMappingPO.setRelationTableName(subTableData.getTableComment());
+                    }
+                }
+                graphRelationMappingPO.setRelationField(relationship.getAssociationTableField());
+                graphRelationMappingPO.setRelationNameField(relationship.getAssociationTableEntityField());
+                relationMappingPOS.add(graphRelationMappingPO);
+            }
+            graphRelationMappingService.saveBatch(relationMappingPOS);
+        }
         return graphStructTaskPO.getId();
     }
 
@@ -228,9 +295,9 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
         //数据源信息
         KnowbaseDatasourcePO datasource = knowbaseDatasourceService.getById(graphStructTaskPO.getDatasourceId());
         //根据任务id获取概念
-        List<GraphSchemaMappingPO> schemaMappingList = graphSchemaMappingService.listByTaskId(graphStructTaskPO.getId());
+        List<GraphConceptMappingPO> schemaMappingList = graphConceptMappingService.listByTaskId(graphStructTaskPO.getId());
         //根据每个映射的概念抽取对应内容
-        for (GraphSchemaMappingPO schemaMappingPO : schemaMappingList) {
+        for (GraphConceptMappingPO schemaMappingPO : schemaMappingList) {
             //获取表名
             String tableName = schemaMappingPO.getTableName();
             //获取数据源信息
@@ -260,8 +327,8 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
                 nodes.put("task_id", graphStructTaskPO.getId());
                 nodes.put("database_id", datasource.getId());
                 nodes.put("table_name", tableName);
-                nodes.put("schema_id", schemaMappingPO.getSchemaId());
-                nodes.put("schema_name", schemaMappingPO.getSchemaName());
+                nodes.put("concept_id", schemaMappingPO.getConceptId());
+                nodes.put("concept_name", schemaMappingPO.getConceptName());
                 nodes.put("release_status", ReleaseStatus.UNPUBLISHED.getValue());
                 for (ConcurrentHashMap.Entry<String, Object> entry : objectMap.entrySet()) {
                     // 获取字段名
@@ -299,7 +366,7 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
                 extractionMergeDO.setDatabase_id(Long.valueOf(datasource.getId().toString()));
                 Map<String, Object> mergeMap = new ObjectMapper().readValue(JSONObject.toJSONString(extractionMergeDO), Map.class);
                 String label = Neo4jLabelEnum.DYNAMICENTITY.getLabel() + ":" + Neo4jLabelEnum.STRUCTURED.getLabel();
-                graphNeo4jRepository.mergeCreateNode(label, wrapper, mergeMap, map, schemaMappingPO.getSchemaName());
+                graphNeo4jRepository.mergeCreateNode(label, wrapper, mergeMap, map, schemaMappingPO.getConceptName());
             }
             //查询映射过的关系
             GraphRelationMappingPageReqVO relationMappingPageReqVO = new GraphRelationMappingPageReqVO();
