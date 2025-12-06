@@ -1,18 +1,18 @@
-package com.insmess.knowledge.module.graph.vo.ontology;
+package com.insmess.knowledge.module.graph.vo.extract;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import com.insmess.knowledge.common.core.page.PageParam;
 
 /**
- * 属性映射 Request VO 对象 graph_attribute_mapping
+ * 关系映射 Request VO 对象 graph_struct_task_relation_mapping
  *
  * @author insmess
  * @date 2025-11-29
  */
-@Schema(description = "属性映射 Request VO")
+@Schema(description = "关系映射 Request VO")
 @Data
-public class GraphAttributeMappingPageReqVO extends PageParam {
+public class GraphStructTaskRelationMappingPageReqVO extends PageParam {
 
     private static final long serialVersionUID = 1L;
     @Schema(description = "ID", example = "")
@@ -32,11 +32,20 @@ public class GraphAttributeMappingPageReqVO extends PageParam {
     @Schema(description = "字段显示名称", example = "")
     private String fieldComment;
 
-    @Schema(description = "属性id", example = "")
-    private Long attributeId;
+    @Schema(description = "关系", example = "")
+    private String relation;
 
-    @Schema(description = "属性名称", example = "")
-    private String attributeName;
+    @Schema(description = "关联表", example = "")
+    private String relationTable;
+
+    @Schema(description = "关联表名称", example = "")
+    private String relationTableName;
+
+    @Schema(description = "关联表字段", example = "")
+    private String relationField;
+
+    @Schema(description = "关联表实体字段", example = "")
+    private String relationNameField;
 
 
 

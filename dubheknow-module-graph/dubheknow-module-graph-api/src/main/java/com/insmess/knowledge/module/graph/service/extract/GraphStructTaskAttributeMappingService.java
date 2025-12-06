@@ -1,28 +1,29 @@
-package com.insmess.knowledge.module.graph.service.ontology;
+package com.insmess.knowledge.module.graph.service.extract;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Collection;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.insmess.knowledge.module.graph.vo.ontology.GraphAttributeMappingSaveReqVO;
-import com.insmess.knowledge.module.graph.vo.ontology.GraphAttributeMappingPageReqVO;
-import com.insmess.knowledge.module.graph.vo.ontology.GraphAttributeMappingRespVO;
-import com.insmess.knowledge.module.graph.dao.po.ontology.GraphAttributeMappingPO;
+import com.insmess.knowledge.module.graph.dao.po.extract.GraphStructTaskAttributeMappingPO;
+import com.insmess.knowledge.module.graph.vo.extract.GraphStructTaskAttributeMappingSaveReqVO;
+import com.insmess.knowledge.module.graph.vo.extract.GraphStructTaskAttributeMappingPageReqVO;
+import com.insmess.knowledge.module.graph.vo.extract.GraphStructTaskAttributeMappingRespVO;
+
 /**
  * 属性映射Service接口
  *
  * @author insmess
  * @date 2025-11-29
  */
-public interface GraphAttributeMappingService extends IService<GraphAttributeMappingPO> {
+public interface GraphStructTaskAttributeMappingService extends IService<GraphStructTaskAttributeMappingPO> {
 
     /**
      * 获得属性映射列表
      *
      * @return 属性映射列表
      */
-    List<GraphAttributeMappingPO> list(GraphAttributeMappingPageReqVO pageReqVO);
+    List<GraphStructTaskAttributeMappingPO> list(GraphStructTaskAttributeMappingPageReqVO pageReqVO);
 
     /**
      * 获得属性映射分页列表
@@ -30,7 +31,7 @@ public interface GraphAttributeMappingService extends IService<GraphAttributeMap
      * @param pageReqVO 分页请求
      * @return 属性映射分页列表
      */
-    Page<GraphAttributeMappingPO> pageGraphAttributeMapping(GraphAttributeMappingPageReqVO pageReqVO);
+    Page<GraphStructTaskAttributeMappingPO> pageGraphAttributeMapping(GraphStructTaskAttributeMappingPageReqVO pageReqVO);
 
     /**
      * 创建属性映射
@@ -38,14 +39,14 @@ public interface GraphAttributeMappingService extends IService<GraphAttributeMap
      * @param saveReqVO 属性映射信息
      * @return 属性映射编号
      */
-    Long saveGraphAttributeMapping(GraphAttributeMappingSaveReqVO saveReqVO);
+    Long saveGraphAttributeMapping(GraphStructTaskAttributeMappingSaveReqVO saveReqVO);
 
     /**
      * 更新属性映射
      *
      * @param updateReqVO 属性映射信息
      */
-    int updateGraphAttributeMapping(GraphAttributeMappingSaveReqVO updateReqVO);
+    int updateGraphAttributeMapping(GraphStructTaskAttributeMappingSaveReqVO updateReqVO);
 
     /**
      * 删除属性映射
@@ -60,21 +61,21 @@ public interface GraphAttributeMappingService extends IService<GraphAttributeMap
      * @param id 属性映射编号
      * @return 属性映射
      */
-    GraphAttributeMappingPO getGraphAttributeMappingById(Long id);
+    GraphStructTaskAttributeMappingPO getGraphAttributeMappingById(Long id);
 
     /**
      * 获得全部属性映射列表
      *
      * @return 属性映射列表
      */
-    List<GraphAttributeMappingPO> listGraphAttributeMapping();
+    List<GraphStructTaskAttributeMappingPO> listGraphAttributeMapping();
 
     /**
      * 获得全部属性映射 Map
      *
      * @return 属性映射 Map
      */
-    Map<Long, GraphAttributeMappingPO> mapGraphAttributeMapping();
+    Map<Long, GraphStructTaskAttributeMappingPO> mapGraphAttributeMapping();
 
 
     /**
@@ -85,12 +86,12 @@ public interface GraphAttributeMappingService extends IService<GraphAttributeMap
      * @param operName 操作用户
      * @return 结果
      */
-    String importGraphAttributeMapping(List<GraphAttributeMappingRespVO> importExcelList, boolean isUpdateSupport, String operName);
+    String importGraphAttributeMapping(List<GraphStructTaskAttributeMappingRespVO> importExcelList, boolean isUpdateSupport, String operName);
 
     /**
      * 根据任务ID查询属性映射
      * @param id
      * @return
      */
-    List<GraphAttributeMappingPO> listByTaskId(Long id);
+    List<GraphStructTaskAttributeMappingPO> listByTaskId(Long id);
 }

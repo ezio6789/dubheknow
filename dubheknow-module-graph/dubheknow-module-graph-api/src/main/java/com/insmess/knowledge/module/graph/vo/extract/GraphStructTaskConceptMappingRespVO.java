@@ -1,4 +1,4 @@
-package com.insmess.knowledge.module.graph.vo.ontology;
+package com.insmess.knowledge.module.graph.vo.extract;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
@@ -9,14 +9,14 @@ import java.util.Date;
 import java.io.Serializable;
 
 /**
- * 概念映射 Response VO 对象 graph_concept_mapping
+ * 概念映射 Response VO 对象 graph_struct_task_concept_mapping
  *
  * @author insmess
  * @date 2025-11-29
  */
 @Schema(description = "概念映射 Response VO")
 @Data
-public class GraphConceptMappingRespVO implements Serializable {
+public class GraphStructTaskConceptMappingRespVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

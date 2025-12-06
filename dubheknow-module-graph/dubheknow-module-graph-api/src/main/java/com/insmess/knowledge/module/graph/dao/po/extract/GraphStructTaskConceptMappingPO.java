@@ -1,4 +1,4 @@
-package com.insmess.knowledge.module.graph.dao.po.ontology;
+package com.insmess.knowledge.module.graph.dao.po.extract;
 
 import lombok.*;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -9,20 +9,20 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.insmess.knowledge.common.core.domain.BaseEntity;
 
 /**
- * 概念映射 PO 对象 graph_concept_mapping
+ * 概念映射 PO 对象 graph_struct_task_concept_mapping
  *
  * @author insmess
  * @date 2025-11-29
  */
 @Data
-@TableName(value = "graph_concept_mapping")
+@TableName(value = "graph_struct_task_concept_mapping")
 // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 // @KeySequence("graph_concept_mapping_seq")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class GraphConceptMappingPO extends BaseEntity {
+public class GraphStructTaskConceptMappingPO extends BaseEntity {
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

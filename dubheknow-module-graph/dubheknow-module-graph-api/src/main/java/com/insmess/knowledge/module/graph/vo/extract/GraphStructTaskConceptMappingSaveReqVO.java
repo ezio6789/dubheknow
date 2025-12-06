@@ -1,4 +1,4 @@
-package com.insmess.knowledge.module.graph.vo.ontology;
+package com.insmess.knowledge.module.graph.vo.extract;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -9,14 +9,14 @@ import jakarta.validation.constraints.Size;
 import com.insmess.knowledge.common.core.domain.BaseEntity;
 
 /**
- * 属性映射 创建/修改 Request VO graph_attribute_mapping
+ * 概念映射 创建/修改 Request VO graph_struct_task_concept_mapping
  *
  * @author insmess
  * @date 2025-11-29
  */
-@Schema(description = "属性映射 Response VO")
+@Schema(description = "概念映射 Response VO")
 @Data
-public class GraphAttributeMappingSaveReqVO extends BaseEntity {
+public class GraphStructTaskConceptMappingSaveReqVO extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
@@ -36,22 +36,18 @@ public class GraphAttributeMappingSaveReqVO extends BaseEntity {
     @Size(max = 128, message = "表显示名称长度不能超过128个字符")
     private String tableComment;
 
-    @Schema(description = "字段名", example = "")
-    @NotBlank(message = "字段名不能为空")
-    private String fieldName;
+    @Schema(description = "实体名称列", example = "")
+    @NotBlank(message = "实体名称列不能为空")
+    @Size(max = 32, message = "实体名称列长度不能超过32个字符")
+    private String entityNameField;
 
-    @Schema(description = "字段显示名称", example = "")
-    @NotBlank(message = "字段显示名称不能为空")
-    @Size(max = 256, message = "字段显示名称长度不能超过256个字符")
-    private String fieldComment;
+    @Schema(description = "概念id", example = "")
+    private Long conceptId;
 
-    @Schema(description = "属性id", example = "")
-    private Long attributeId;
-
-    @Schema(description = "属性名称", example = "")
-    @NotBlank(message = "属性名称不能为空")
-    @Size(max = 128, message = "属性名称长度不能超过128个字符")
-    private String attributeName;
+    @Schema(description = "概念名称", example = "")
+    @NotBlank(message = "概念名称不能为空")
+    @Size(max = 128, message = "概念名称长度不能超过128个字符")
+    private String conceptName;
 
     @Schema(description = "备注", example = "")
     @NotBlank(message = "备注不能为空")

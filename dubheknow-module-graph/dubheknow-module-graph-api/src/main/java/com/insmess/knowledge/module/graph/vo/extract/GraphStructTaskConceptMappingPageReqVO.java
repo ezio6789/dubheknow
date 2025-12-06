@@ -1,18 +1,18 @@
-package com.insmess.knowledge.module.graph.vo.ontology;
+package com.insmess.knowledge.module.graph.vo.extract;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import com.insmess.knowledge.common.core.page.PageParam;
 
 /**
- * 概念映射 Request VO 对象 graph_concept_mapping
+ * 概念映射 Request VO 对象 graph_struct_task_concept_mapping
  *
  * @author insmess
  * @date 2025-11-29
  */
 @Schema(description = "概念映射 Request VO")
 @Data
-public class GraphConceptMappingPageReqVO extends PageParam {
+public class GraphStructTaskConceptMappingPageReqVO extends PageParam {
 
     private static final long serialVersionUID = 1L;
     @Schema(description = "ID", example = "")

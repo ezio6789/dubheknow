@@ -11,20 +11,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insmess.knowledge.database.DataSourceFactory;
 import com.insmess.knowledge.database.DbQuery;
 import com.insmess.knowledge.database.constants.DbQueryProperty;
+import com.insmess.knowledge.module.graph.dao.po.extract.GraphStructTaskConceptMappingPO;
+import com.insmess.knowledge.module.graph.dao.po.extract.GraphStructTaskRelationMappingPO;
 import com.insmess.knowledge.module.graph.dao.po.extract.neo4j.GraphExtractionEntity;
 import com.insmess.knowledge.module.graph.dao.po.extract.neo4j.GraphExtractionMergeDO;
-import com.insmess.knowledge.module.graph.dao.po.ontology.GraphAttributeMappingPO;
-import com.insmess.knowledge.module.graph.dao.po.ontology.GraphConceptMappingPO;
-import com.insmess.knowledge.module.graph.dao.po.ontology.GraphRelationMappingPO;
+import com.insmess.knowledge.module.graph.dao.po.extract.GraphStructTaskAttributeMappingPO;
 import com.insmess.knowledge.module.graph.enums.ExtTaskStatus;
 import com.insmess.knowledge.module.graph.enums.ReleaseStatus;
 import com.insmess.knowledge.module.graph.repository.GraphNeo4jRepository;
-import com.insmess.knowledge.module.graph.service.ontology.GraphAttributeMappingService;
-import com.insmess.knowledge.module.graph.service.ontology.GraphRelationMappingService;
-import com.insmess.knowledge.module.graph.service.ontology.GraphConceptMappingService;
+import com.insmess.knowledge.module.graph.service.extract.GraphStructTaskAttributeMappingService;
+import com.insmess.knowledge.module.graph.service.extract.GraphStructTaskRelationMappingService;
+import com.insmess.knowledge.module.graph.service.extract.GraphStructTaskConceptMappingService;
 import com.insmess.knowledge.module.graph.vo.extract.GraphStructTaskSaveRelationVO;
-import com.insmess.knowledge.module.graph.vo.ontology.GraphAttributeMappingPageReqVO;
-import com.insmess.knowledge.module.graph.vo.ontology.GraphRelationMappingPageReqVO;
+import com.insmess.knowledge.module.graph.vo.extract.GraphStructTaskAttributeMappingPageReqVO;
+import com.insmess.knowledge.module.graph.vo.extract.GraphStructTaskRelationMappingPageReqVO;
 import com.insmess.knowledge.module.knowbase.dao.po.struct.KnowbaseDatasourcePO;
 import com.insmess.knowledge.module.knowbase.service.struct.KnowbaseDatasourceService;
 import com.insmess.knowledge.mybatis.core.query.LambdaQueryWrapperX;
@@ -68,16 +68,16 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
     private KnowbaseDatasourceService knowbaseDatasourceService;
 
     @Resource
-    private GraphConceptMappingService graphConceptMappingService;
+    private GraphStructTaskConceptMappingService graphStructTaskConceptMappingService;
 
     @Resource
-    private GraphAttributeMappingService graphAttributeMappingService;
+    private GraphStructTaskAttributeMappingService graphStructTaskAttributeMappingService;
 
     @Resource
     private DataSourceFactory dataSourceFactory;
 
     @Autowired
-    private GraphRelationMappingService graphRelationMappingService;
+    private GraphStructTaskRelationMappingService graphStructTaskRelationMappingService;
 
     @Override
     public Page<GraphStructTaskPO> pageGraphStructTask(GraphStructTaskPageReqVO pageReqVO) {
@@ -101,33 +101,33 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
             }
             GraphStructTaskSaveRelationVO.MappingData mappingData = tableData.getMappingData();
             //概念映射
-            GraphConceptMappingPO graphConceptMappingPO = new GraphConceptMappingPO();
-            graphConceptMappingPO.setTaskId(graphStructTaskPO.getId());
-            graphConceptMappingPO.setTableName(tableData.getTableName());
-            graphConceptMappingPO.setTableComment(tableData.getTableComment());
-            graphConceptMappingPO.setEntityNameField(mappingData.getEntityNameField());
-            graphConceptMappingPO.setConceptId(mappingData.getConceptId());
-            graphConceptMappingPO.setConceptName(mappingData.getConceptName());
-            graphConceptMappingService.save(graphConceptMappingPO);
+            GraphStructTaskConceptMappingPO graphStructTaskConceptMappingPO = new GraphStructTaskConceptMappingPO();
+            graphStructTaskConceptMappingPO.setTaskId(graphStructTaskPO.getId());
+            graphStructTaskConceptMappingPO.setTableName(tableData.getTableName());
+            graphStructTaskConceptMappingPO.setTableComment(tableData.getTableComment());
+            graphStructTaskConceptMappingPO.setEntityNameField(mappingData.getEntityNameField());
+            graphStructTaskConceptMappingPO.setConceptId(mappingData.getConceptId());
+            graphStructTaskConceptMappingPO.setConceptName(mappingData.getConceptName());
+            graphStructTaskConceptMappingService.save(graphStructTaskConceptMappingPO);
             //属性映射
             List<GraphStructTaskSaveRelationVO.Attribute> attributes = mappingData.getAttributeList();
             attributes.stream().filter(attribute -> attribute.getConceptId() != null).collect(Collectors.toList());
-            List<GraphAttributeMappingPO> attributeMappingPOS = new ArrayList<>();
+            List<GraphStructTaskAttributeMappingPO> attributeMappingPOS = new ArrayList<>();
             for (GraphStructTaskSaveRelationVO.Attribute attribute : attributes) {
-                GraphAttributeMappingPO graphAttributeMappingPO = new GraphAttributeMappingPO();
-                graphAttributeMappingPO.setTaskId(graphStructTaskPO.getId());
-                graphAttributeMappingPO.setTableName(tableData.getTableName());
-                graphAttributeMappingPO.setTableComment(tableData.getTableComment());
-                graphAttributeMappingPO.setFieldName(attribute.getField());
-                graphAttributeMappingPO.setFieldComment(attribute.getFieldDescription());
-                graphAttributeMappingPO.setAttributeId(attribute.getConceptId());
-                graphAttributeMappingPO.setAttributeName(attribute.getConceptName());
-                attributeMappingPOS.add(graphAttributeMappingPO);
+                GraphStructTaskAttributeMappingPO graphStructTaskAttributeMappingPO = new GraphStructTaskAttributeMappingPO();
+                graphStructTaskAttributeMappingPO.setTaskId(graphStructTaskPO.getId());
+                graphStructTaskAttributeMappingPO.setTableName(tableData.getTableName());
+                graphStructTaskAttributeMappingPO.setTableComment(tableData.getTableComment());
+                graphStructTaskAttributeMappingPO.setFieldName(attribute.getField());
+                graphStructTaskAttributeMappingPO.setFieldComment(attribute.getFieldDescription());
+                graphStructTaskAttributeMappingPO.setAttributeId(attribute.getConceptId());
+                graphStructTaskAttributeMappingPO.setAttributeName(attribute.getConceptName());
+                attributeMappingPOS.add(graphStructTaskAttributeMappingPO);
             }
-            graphAttributeMappingService.saveBatch(attributeMappingPOS);
+            graphStructTaskAttributeMappingService.saveBatch(attributeMappingPOS);
             //关系映射
             List<GraphStructTaskSaveRelationVO.Relationship> relationshipList = mappingData.getRelationshipList();
-            List<GraphRelationMappingPO> relationMappingPOS = new ArrayList<>();
+            List<GraphStructTaskRelationMappingPO> relationMappingPOS = new ArrayList<>();
             relationshipList = relationshipList.stream()
                     .filter(e -> StringUtils.isNotBlank(e.getField())
                             && StringUtils.isNotBlank(e.getRelation())
@@ -140,24 +140,24 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
                         || StringUtils.isBlank(relationship.getAssociationTable()) || StringUtils.isBlank(relationship.getAssociationTableField())) {
                     break;
                 }
-                GraphRelationMappingPO graphRelationMappingPO = new GraphRelationMappingPO();
-                graphRelationMappingPO.setTaskId(graphStructTaskPO.getId());
-                graphRelationMappingPO.setTableName(tableData.getTableName());
-                graphRelationMappingPO.setTableComment(tableData.getTableComment());
-                graphRelationMappingPO.setFieldName(relationship.getField());
-                graphRelationMappingPO.setFieldComment("保留");
-                graphRelationMappingPO.setRelation(relationship.getRelation());
-                graphRelationMappingPO.setRelationTable(relationship.getAssociationTable());
+                GraphStructTaskRelationMappingPO graphStructTaskRelationMappingPO = new GraphStructTaskRelationMappingPO();
+                graphStructTaskRelationMappingPO.setTaskId(graphStructTaskPO.getId());
+                graphStructTaskRelationMappingPO.setTableName(tableData.getTableName());
+                graphStructTaskRelationMappingPO.setTableComment(tableData.getTableComment());
+                graphStructTaskRelationMappingPO.setFieldName(relationship.getField());
+                graphStructTaskRelationMappingPO.setFieldComment("保留");
+                graphStructTaskRelationMappingPO.setRelation(relationship.getRelation());
+                graphStructTaskRelationMappingPO.setRelationTable(relationship.getAssociationTable());
                 for (GraphStructTaskSaveRelationVO.TableData subTableData : tableDatas) {
                     if (subTableData.getTableName().equals(relationship.getAssociationTable())) {
-                        graphRelationMappingPO.setRelationTableName(subTableData.getTableComment());
+                        graphStructTaskRelationMappingPO.setRelationTableName(subTableData.getTableComment());
                     }
                 }
-                graphRelationMappingPO.setRelationField(relationship.getAssociationTableField());
-                graphRelationMappingPO.setRelationNameField(relationship.getAssociationTableEntityField());
-                relationMappingPOS.add(graphRelationMappingPO);
+                graphStructTaskRelationMappingPO.setRelationField(relationship.getAssociationTableField());
+                graphStructTaskRelationMappingPO.setRelationNameField(relationship.getAssociationTableEntityField());
+                relationMappingPOS.add(graphStructTaskRelationMappingPO);
             }
-            graphRelationMappingService.saveBatch(relationMappingPOS);
+            graphStructTaskRelationMappingService.saveBatch(relationMappingPOS);
         }
         return graphStructTaskPO.getId();
     }
@@ -295,15 +295,15 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
     public Map<String, Object> getInfoTaskById(Long id) {
         GraphStructTaskPO structTaskPO = getById(id);
         //获取关联概念
-        List<GraphConceptMappingPO> graphConceptMappingList = graphConceptMappingService.listByTaskId(id);
+        List<GraphStructTaskConceptMappingPO> graphConceptMappingList = graphStructTaskConceptMappingService.listByTaskId(id);
         //获取关联属性映射
-        List<GraphAttributeMappingPO> graphAttributeMappingList = graphAttributeMappingService.listByTaskId(id);
+        List<GraphStructTaskAttributeMappingPO> graphAttributeMappingList = graphStructTaskAttributeMappingService.listByTaskId(id);
         //获取关联关系映射
-        List<GraphRelationMappingPO> graphRelationMappingList = graphRelationMappingService.listByTaskId(id);
+        List<GraphStructTaskRelationMappingPO> graphRelationMappingList = graphStructTaskRelationMappingService.listByTaskId(id);
         //获取导入的表
         List<String> stringList = Stream.concat(
-                        graphConceptMappingList.stream().map(GraphConceptMappingPO::getTableName).filter(Objects::nonNull),
-                        graphRelationMappingList.stream().map(GraphRelationMappingPO::getRelationTable).filter(Objects::nonNull)
+                        graphConceptMappingList.stream().map(GraphStructTaskConceptMappingPO::getTableName).filter(Objects::nonNull),
+                        graphRelationMappingList.stream().map(GraphStructTaskRelationMappingPO::getRelationTable).filter(Objects::nonNull)
                 )
                 .distinct()  // 去重
                 .toList();
@@ -315,7 +315,7 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
             Long conceptId = null;
             String conceptName = null;
             String tableComment = null;
-            for (GraphConceptMappingPO mappingPO : graphConceptMappingList) {
+            for (GraphStructTaskConceptMappingPO mappingPO : graphConceptMappingList) {
                 if (tableName.equals(mappingPO.getTableName())) {
                     status = true;
                     conceptId = mappingPO.getConceptId();
@@ -323,7 +323,7 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
                     break;
                 }
             }
-            for (GraphRelationMappingPO mappingPO : graphRelationMappingList) {
+            for (GraphStructTaskRelationMappingPO mappingPO : graphRelationMappingList) {
                 if (tableName.equals(mappingPO.getTableName())) {
                     tableComment = mappingPO.getTableComment();
                     break;
@@ -356,9 +356,9 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
         //数据源信息
         KnowbaseDatasourcePO datasource = knowbaseDatasourceService.getById(graphStructTaskPO.getDatasourceId());
         //根据任务id获取概念
-        List<GraphConceptMappingPO> schemaMappingList = graphConceptMappingService.listByTaskId(graphStructTaskPO.getId());
+        List<GraphStructTaskConceptMappingPO> schemaMappingList = graphStructTaskConceptMappingService.listByTaskId(graphStructTaskPO.getId());
         //根据每个映射的概念抽取对应内容
-        for (GraphConceptMappingPO schemaMappingPO : schemaMappingList) {
+        for (GraphStructTaskConceptMappingPO schemaMappingPO : schemaMappingList) {
             //获取表名
             String tableName = schemaMappingPO.getTableName();
             //获取数据源信息
@@ -376,10 +376,10 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
             //查询该表数据
                 List<Map<String, Object>> mapList = dbQuery.queryList("SELECT * FROM " + tableName);
                 //查询所有相关属性映射
-                GraphAttributeMappingPageReqVO attributeMappingReqVo = new GraphAttributeMappingPageReqVO();
+                GraphStructTaskAttributeMappingPageReqVO attributeMappingReqVo = new GraphStructTaskAttributeMappingPageReqVO();
                 attributeMappingReqVo.setTaskId(graphStructTaskPO.getId());
                 attributeMappingReqVo.setTableName(tableName);
-                List<GraphAttributeMappingPO> attributeMappingList = graphAttributeMappingService.list(attributeMappingReqVo);
+                List<GraphStructTaskAttributeMappingPO> attributeMappingList = graphStructTaskAttributeMappingService.list(attributeMappingReqVo);
                 //将属性和表字段对应上, 存成一个数组
                 ArrayList<ConcurrentHashMap<String, Object>> maps = new ArrayList<>();
                 for (Map<String, Object> objectMap : mapList) {
@@ -404,7 +404,7 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
                         if ("id".equals(columnName)) {
                             nodes.put("data_id", columnValue);
                         }
-                        for (GraphAttributeMappingPO attributeMappingDO : attributeMappingList) {
+                        for (GraphStructTaskAttributeMappingPO attributeMappingDO : attributeMappingList) {
                             //如果这个字段映射过属性, 就把属性放到节点map中
                             if (attributeMappingDO.getAttributeId() != null && columnName.equals(attributeMappingDO.getFieldName())) {
                                 //把所有添加属性映射的区分出来, 方便展示
@@ -430,12 +430,12 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
                     graphNeo4jRepository.mergeCreateNode(label, wrapper, mergeMap, map, schemaMappingPO.getConceptName());
                 }
                 //查询映射过的关系
-                GraphRelationMappingPageReqVO relationMappingPageReqVO = new GraphRelationMappingPageReqVO();
+                GraphStructTaskRelationMappingPageReqVO relationMappingPageReqVO = new GraphStructTaskRelationMappingPageReqVO();
                 relationMappingPageReqVO.setTaskId(graphStructTaskPO.getId());
                 relationMappingPageReqVO.setTableName(tableName);
-                List<GraphRelationMappingPO> relationMappingList = graphRelationMappingService.list(relationMappingPageReqVO);
+                List<GraphStructTaskRelationMappingPO> relationMappingList = graphStructTaskRelationMappingService.list(relationMappingPageReqVO);
                 //循环映射的关系
-                for (GraphRelationMappingPO relationMappingDO : relationMappingList) {
+                for (GraphStructTaskRelationMappingPO relationMappingDO : relationMappingList) {
                     //字段名
                     String fieldName = relationMappingDO.getFieldName();
                     //关联表

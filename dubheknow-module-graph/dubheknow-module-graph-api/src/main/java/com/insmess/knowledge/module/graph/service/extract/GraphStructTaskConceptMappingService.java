@@ -1,14 +1,14 @@
-package com.insmess.knowledge.module.graph.service.ontology;
+package com.insmess.knowledge.module.graph.service.extract;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Collection;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.insmess.knowledge.module.graph.dao.po.ontology.GraphConceptMappingPO;
-import com.insmess.knowledge.module.graph.vo.ontology.GraphConceptMappingPageReqVO;
-import com.insmess.knowledge.module.graph.vo.ontology.GraphConceptMappingSaveReqVO;
-import com.insmess.knowledge.module.graph.vo.ontology.GraphConceptMappingRespVO;
+import com.insmess.knowledge.module.graph.dao.po.extract.GraphStructTaskConceptMappingPO;
+import com.insmess.knowledge.module.graph.vo.extract.GraphStructTaskConceptMappingPageReqVO;
+import com.insmess.knowledge.module.graph.vo.extract.GraphStructTaskConceptMappingSaveReqVO;
+import com.insmess.knowledge.module.graph.vo.extract.GraphStructTaskConceptMappingRespVO;
 
 /**
  * 概念映射Service接口
@@ -16,7 +16,7 @@ import com.insmess.knowledge.module.graph.vo.ontology.GraphConceptMappingRespVO;
  * @author insmess
  * @date 2025-11-29
  */
-public interface GraphConceptMappingService extends IService<GraphConceptMappingPO> {
+public interface GraphStructTaskConceptMappingService extends IService<GraphStructTaskConceptMappingPO> {
 
     /**
      * 根据任务编号获得概念映射列表
@@ -24,7 +24,7 @@ public interface GraphConceptMappingService extends IService<GraphConceptMapping
      * @param taskId 任务编号
      * @return 概念映射列表
      */
-    List<GraphConceptMappingPO> listByTaskId(Long taskId);
+    List<GraphStructTaskConceptMappingPO> listByTaskId(Long taskId);
 
     /**
      * 获得概念映射分页列表
@@ -32,7 +32,7 @@ public interface GraphConceptMappingService extends IService<GraphConceptMapping
      * @param pageReqVO 分页请求
      * @return 概念映射分页列表
      */
-    Page<GraphConceptMappingPO> pageGraphConceptMapping(GraphConceptMappingPageReqVO pageReqVO);
+    Page<GraphStructTaskConceptMappingPO> pageGraphConceptMapping(GraphStructTaskConceptMappingPageReqVO pageReqVO);
 
     /**
      * 创建概念映射
@@ -40,14 +40,14 @@ public interface GraphConceptMappingService extends IService<GraphConceptMapping
      * @param saveReqVO 概念映射信息
      * @return 概念映射编号
      */
-    Long saveGraphConceptMapping(GraphConceptMappingSaveReqVO saveReqVO);
+    Long saveGraphConceptMapping(GraphStructTaskConceptMappingSaveReqVO saveReqVO);
 
     /**
      * 更新概念映射
      *
      * @param updateReqVO 概念映射信息
      */
-    int updateGraphConceptMapping(GraphConceptMappingSaveReqVO updateReqVO);
+    int updateGraphConceptMapping(GraphStructTaskConceptMappingSaveReqVO updateReqVO);
 
     /**
      * 删除概念映射
@@ -62,21 +62,21 @@ public interface GraphConceptMappingService extends IService<GraphConceptMapping
      * @param id 概念映射编号
      * @return 概念映射
      */
-    GraphConceptMappingPO getGraphConceptMappingById(Long id);
+    GraphStructTaskConceptMappingPO getGraphConceptMappingById(Long id);
 
     /**
      * 获得全部概念映射列表
      *
      * @return 概念映射列表
      */
-    List<GraphConceptMappingPO> listGraphConceptMapping();
+    List<GraphStructTaskConceptMappingPO> listGraphConceptMapping();
 
     /**
      * 获得全部概念映射 Map
      *
      * @return 概念映射 Map
      */
-    Map<Long, GraphConceptMappingPO> mapGraphConceptMapping();
+    Map<Long, GraphStructTaskConceptMappingPO> mapGraphConceptMapping();
 
 
     /**
@@ -87,6 +87,6 @@ public interface GraphConceptMappingService extends IService<GraphConceptMapping
      * @param operName 操作用户
      * @return 结果
      */
-    String importGraphConceptMapping(List<GraphConceptMappingRespVO> importExcelList, boolean isUpdateSupport, String operName);
+    String importGraphConceptMapping(List<GraphStructTaskConceptMappingRespVO> importExcelList, boolean isUpdateSupport, String operName);
 
 }
