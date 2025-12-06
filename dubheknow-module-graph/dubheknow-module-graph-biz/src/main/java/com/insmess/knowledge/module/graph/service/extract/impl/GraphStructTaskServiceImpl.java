@@ -279,6 +279,7 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
         }
         //设置任务执行状态
         graphStructTaskPO.setStatus(ExtTaskStatus.INPROGRESS.getValue());
+        updateById(graphStructTaskPO);
         //执行任务
         new Thread(() -> {
             try {
