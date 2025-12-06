@@ -1,5 +1,9 @@
 package com.insmess.knowledge.module.knowbase.controller.struct;
 
+import cn.hutool.json.JSONObject;
+import com.insmess.knowledge.database.core.DbColumn;
+import com.insmess.knowledge.database.core.DbTable;
+import com.insmess.knowledge.module.knowbase.vo.struct.KnowbaseDatasourceColumnQueryVO;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -43,6 +47,22 @@ public class KnowbaseDatasourceController extends BaseController {
     @Resource
     private KnowbaseDatasourceService knowbaseDatasourceService;
 
+    @Operation(summary = "获取数据源里面的数据表的数据字段")
+    @PreAuthorize("@ss.hasPermi('dm:datasource:datasource:query')")
+    @PostMapping(value = "/columnsList")
+    public CommonResult getColumnsList(@RequestBody KnowbaseDatasourceColumnQueryVO queryVO) {
+        List<DbColumn> columns = knowbaseDatasourceService.listColumns(queryVO);
+        return CommonResult.success(columns);
+    }
+
+    @Operation(summary = "获取数据源里面的数据表")
+    @PreAuthorize("@ss.hasPermi('dm:datasource:datasource:query')")
+    @GetMapping(value = "/tableList/{id}")
+    public CommonResult tableList(@PathVariable("id") Long id) {
+        List<DbTable> tables = knowbaseDatasourceService.listTable(id);
+        return CommonResult.success(tables);
+    }
+
     @Operation(summary = "测试连接")
     @PreAuthorize("@ss.hasPermi('knowbase:struct:datasource:list')")
     @GetMapping("/testConnection/{id}")
@@ -51,7 +71,7 @@ public class KnowbaseDatasourceController extends BaseController {
             knowbaseDatasourceService.testConnection(id);
             return CommonResult.success(null);
         } catch (Exception e) {
-            return CommonResult.error(GlobalErrorCodeConstants.BAD_REQUEST);
+            return CommonResult.error(GlobalErrorCodeConstants.ERROR);
         }
     }
 

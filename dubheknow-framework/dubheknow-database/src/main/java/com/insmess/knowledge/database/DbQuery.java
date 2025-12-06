@@ -15,7 +15,7 @@ import java.util.Map;
  * @author QianTongDC
  * @date 2022-11-14
  */
-public interface DbQuery {
+public interface DbQuery extends AutoCloseable{
 
     /**
      * 获取数据库连接

@@ -10,6 +10,10 @@ import java.util.stream.Collectors;
 import com.insmess.knowledge.database.DataSourceFactory;
 import com.insmess.knowledge.database.DbQuery;
 import com.insmess.knowledge.database.constants.DbQueryProperty;
+import com.insmess.knowledge.database.core.DbColumn;
+import com.insmess.knowledge.database.core.DbTable;
+import com.insmess.knowledge.database.exception.DataQueryException;
+import com.insmess.knowledge.module.knowbase.vo.struct.KnowbaseDatasourceColumnQueryVO;
 import com.insmess.knowledge.mybatis.core.query.LambdaQueryWrapperX;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
@@ -173,12 +177,63 @@ public class KnowbaseDatasourceServiceImpl  extends ServiceImpl<KnowbaseDatasour
                 datasource.getSchemaName(),
                 datasource.getSid()
         );
-        DbQuery dbQuery = dataSourceFactory.createDbQuery(dbQueryProperty);
-        try (Connection con = dbQuery.getConnection()) {
-
+        try (DbQuery dbQuery = dataSourceFactory.createDbQuery(dbQueryProperty)) {
+            dbQuery.getConnection();
         } catch (Exception e) {
             throw new ServiceException("数据源连接失败：" + e.getMessage());
         }
+    }
+
+    @Override
+    public List<DbTable> listTable(Long id) {
+        KnowbaseDatasourcePO datasourcePO = getById(id);
+        if (datasourcePO == null) {
+            throw new ServiceException("数据源不存在");
+        }
+        DbQueryProperty dbQueryProperty = new DbQueryProperty(
+                datasourcePO.getDatasourceType(),
+                datasourcePO.getHost(),
+                datasourcePO.getUsername(),
+                datasourcePO.getPassword(),
+                datasourcePO.getPort().intValue(),
+                datasourcePO.getSchemaName(),
+                datasourcePO.getSid()
+        );
+        DbQuery dbQuery = dataSourceFactory.createDbQuery(dbQueryProperty);
+        if (!dbQuery.valid()) {
+            throw new ServiceException("数据源连接失败");
+        }
+        return dbQuery.getTables(dbQueryProperty);
+    }
+
+    @Override
+    public List<DbColumn> listColumns(KnowbaseDatasourceColumnQueryVO queryVO) {
+        String tableName = queryVO.getTableName();
+        Long id = Long.valueOf(queryVO.getId());
+        if (StringUtils.isEmpty(tableName)) {
+            throw new DataQueryException("表名不能为空");
+        }
+        KnowbaseDatasourcePO datasourcePO = this.getKnowbaseDatasourceById(id);
+        if (datasourcePO == null) {
+            throw new DataQueryException("数据源详情信息查询失败");
+        }
+
+        DbQueryProperty dbQueryProperty = new DbQueryProperty(
+                datasourcePO.getDatasourceType(),
+                datasourcePO.getHost(),
+                datasourcePO.getUsername(),
+                datasourcePO.getPassword(),
+                datasourcePO.getPort().intValue(),
+                datasourcePO.getSchemaName(),
+                datasourcePO.getSid()
+        );
+        DbQuery dbQuery = dataSourceFactory.createDbQuery(dbQueryProperty);
+        if (!dbQuery.valid()) {
+            throw new DataQueryException("数据库连接失败");
+        }
+
+        List<DbColumn> tableColumns = dbQuery.getTableColumns(dbQueryProperty, tableName);
+        return tableColumns;
     }
 
     private LambdaQueryWrapperX<KnowbaseDatasourcePO> queryCondition(KnowbaseDatasourcePageReqVO pageReqVO) {

@@ -87,4 +87,12 @@ public interface GraphRelationMappingService extends IService<GraphRelationMappi
      * @return 关系映射列表
      */
     List<GraphRelationMappingPO> list(GraphRelationMappingPageReqVO relationMappingPageReqVO);
+
+    /**
+     * 根据任务ID查询关系映射列表
+     *
+     * @param id 任务ID
+     * @return 关系映射列表
+     */
+    List<GraphRelationMappingPO> listByTaskId(Long id);
 }

@@ -3,6 +3,7 @@ package com.insmess.knowledge.module.graph.service.extract.impl;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -89,12 +90,13 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
     @Override
     public Long saveGraphStructTask(GraphStructTaskSaveReqVO saveReqVO) {
         GraphStructTaskPO graphStructTaskPO = GraphStructTaskConvert.INSTANCE.convertToPO(saveReqVO);
+        graphStructTaskPO.setName(saveReqVO.getTaskName());
         graphStructTaskMapper.insert(graphStructTaskPO);
         //添加映射关系
         List<GraphStructTaskSaveRelationVO.TableData> tableDatas = saveReqVO.getTableData();
         for (GraphStructTaskSaveRelationVO.TableData tableData : tableDatas) {
             //未映射不处理
-            if ("1".equals(tableData.getStatus())) {
+            if (!"1".equals(tableData.getStatus())) {
                 break;
             }
             GraphStructTaskSaveRelationVO.MappingData mappingData = tableData.getMappingData();
@@ -289,6 +291,65 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
         }).start();
     }
 
+    @Override
+    public Map<String, Object> getInfoTaskById(Long id) {
+        GraphStructTaskPO structTaskPO = getById(id);
+        //获取关联概念
+        List<GraphConceptMappingPO> graphConceptMappingList = graphConceptMappingService.listByTaskId(id);
+        //获取关联属性映射
+        List<GraphAttributeMappingPO> graphAttributeMappingList = graphAttributeMappingService.listByTaskId(id);
+        //获取关联关系映射
+        List<GraphRelationMappingPO> graphRelationMappingList = graphRelationMappingService.listByTaskId(id);
+        //获取导入的表
+        List<String> stringList = Stream.concat(
+                        graphConceptMappingList.stream().map(GraphConceptMappingPO::getTableName).filter(Objects::nonNull),
+                        graphRelationMappingList.stream().map(GraphRelationMappingPO::getRelationTable).filter(Objects::nonNull)
+                )
+                .distinct()  // 去重
+                .toList();
+
+        //判断这些表是否有对应概念
+        ArrayList<Object> tableMappingList = new ArrayList<>();
+        for (String tableName : stringList) {
+            boolean status = false;
+            Long conceptId = null;
+            String conceptName = null;
+            String tableComment = null;
+            for (GraphConceptMappingPO mappingPO : graphConceptMappingList) {
+                if (tableName.equals(mappingPO.getTableName())) {
+                    status = true;
+                    conceptId = mappingPO.getConceptId();
+                    conceptName = mappingPO.getConceptName();
+                    break;
+                }
+            }
+            for (GraphRelationMappingPO mappingPO : graphRelationMappingList) {
+                if (tableName.equals(mappingPO.getTableName())) {
+                    tableComment = mappingPO.getTableComment();
+                    break;
+                } else if (tableName.equals(mappingPO.getRelationTable())) {
+                    tableComment = mappingPO.getRelationTableName();
+                    break;
+                }
+            }
+            HashMap<String, Object> hashMap = new HashMap<>();
+            hashMap.put("tableName", tableName);
+            hashMap.put("tableComment", tableComment);
+            hashMap.put("status", status);
+            hashMap.put("conceptId", conceptId);
+            hashMap.put("schemaName", conceptName);
+            tableMappingList.add(hashMap);
+        }
+        //封装Vo
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("structTask", structTaskPO);
+        hashMap.put("tableMappingList", tableMappingList);//表
+        hashMap.put("conceptMappingList", graphConceptMappingList);//概念
+        hashMap.put("attributeMappingList", graphAttributeMappingList);//属性
+        hashMap.put("relationMappingList", graphRelationMappingList);//关系
+        return hashMap;
+    }
+
     private void execute(GraphStructTaskPO graphStructTaskPO) throws JsonProcessingException {
         //删除该任务所有的数据
         graphNeo4jRepository.deleteByTaskId(graphStructTaskPO.getId());
@@ -311,164 +372,167 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
                     datasource.getSid()
             );
             //创建数据库查询对象
-            DbQuery dbQuery = dataSourceFactory.createDbQuery(dbQueryProperty);
+            try (DbQuery dbQuery = dataSourceFactory.createDbQuery(dbQueryProperty)) {
             //查询该表数据
-            List<Map<String, Object>> mapList = dbQuery.queryList("SELECT * FROM " + tableName);
-            //查询所有相关属性映射
-            GraphAttributeMappingPageReqVO attributeMappingReqVo = new GraphAttributeMappingPageReqVO();
-            attributeMappingReqVo.setTaskId(graphStructTaskPO.getId());
-            attributeMappingReqVo.setTableName(tableName);
-            List<GraphAttributeMappingPO> attributeMappingList = graphAttributeMappingService.list(attributeMappingReqVo);
-            //将属性和表字段对应上, 存成一个数组
-            ArrayList<ConcurrentHashMap<String, Object>> maps = new ArrayList<>();
-            for (Map<String, Object> objectMap : mapList) {
-                //创建属性map  以属性id为key,字段值为value
-                ConcurrentHashMap<String, Object> nodes = new ConcurrentHashMap<>();
-                nodes.put("task_id", graphStructTaskPO.getId());
-                nodes.put("database_id", datasource.getId());
-                nodes.put("table_name", tableName);
-                nodes.put("concept_id", schemaMappingPO.getConceptId());
-                nodes.put("concept_name", schemaMappingPO.getConceptName());
-                nodes.put("release_status", ReleaseStatus.UNPUBLISHED.getValue());
-                for (ConcurrentHashMap.Entry<String, Object> entry : objectMap.entrySet()) {
-                    // 获取字段名
-                    String columnName = entry.getKey();
-                    // 获取字段值
-                    Object columnValue = entry.getValue();
-                    //如果这个字段是实体名称, 这个字段在前端选择
-                    if (columnName.equals(schemaMappingPO.getEntityNameField())) {
-                        nodes.put("name", columnValue);
-                    }
-                    //每个表必须要有id字段
-                    if ("id".equals(columnName)) {
-                        nodes.put("data_id", columnValue);
-                    }
-                    for (GraphAttributeMappingPO attributeMappingDO : attributeMappingList) {
-                        //如果这个字段映射过属性, 就把属性放到节点map中
-                        if (attributeMappingDO.getAttributeId() != null && columnName.equals(attributeMappingDO.getFieldName())) {
-                            //把所有添加属性映射的区分出来, 方便展示
-                            nodes.put("attribute_id_" + attributeMappingDO.getAttributeId(), columnValue);
+                List<Map<String, Object>> mapList = dbQuery.queryList("SELECT * FROM " + tableName);
+                //查询所有相关属性映射
+                GraphAttributeMappingPageReqVO attributeMappingReqVo = new GraphAttributeMappingPageReqVO();
+                attributeMappingReqVo.setTaskId(graphStructTaskPO.getId());
+                attributeMappingReqVo.setTableName(tableName);
+                List<GraphAttributeMappingPO> attributeMappingList = graphAttributeMappingService.list(attributeMappingReqVo);
+                //将属性和表字段对应上, 存成一个数组
+                ArrayList<ConcurrentHashMap<String, Object>> maps = new ArrayList<>();
+                for (Map<String, Object> objectMap : mapList) {
+                    //创建属性map  以属性id为key,字段值为value
+                    ConcurrentHashMap<String, Object> nodes = new ConcurrentHashMap<>();
+                    nodes.put("task_id", graphStructTaskPO.getId());
+                    nodes.put("database_id", datasource.getId());
+                    nodes.put("table_name", tableName);
+                    nodes.put("concept_id", schemaMappingPO.getConceptId());
+                    nodes.put("concept_name", schemaMappingPO.getConceptName());
+                    nodes.put("release_status", ReleaseStatus.UNPUBLISHED.getValue());
+                    for (ConcurrentHashMap.Entry<String, Object> entry : objectMap.entrySet()) {
+                        // 获取字段名
+                        String columnName = entry.getKey();
+                        // 获取字段值
+                        Object columnValue = entry.getValue();
+                        //如果这个字段是实体名称, 这个字段在前端选择
+                        if (columnName.equals(schemaMappingPO.getEntityNameField())) {
+                            nodes.put("name", columnValue);
+                        }
+                        //每个表必须要有id字段
+                        if ("id".equals(columnName)) {
+                            nodes.put("data_id", columnValue);
+                        }
+                        for (GraphAttributeMappingPO attributeMappingDO : attributeMappingList) {
+                            //如果这个字段映射过属性, 就把属性放到节点map中
+                            if (attributeMappingDO.getAttributeId() != null && columnName.equals(attributeMappingDO.getFieldName())) {
+                                //把所有添加属性映射的区分出来, 方便展示
+                                nodes.put("attribute_id_" + attributeMappingDO.getAttributeId(), columnValue);
+                            }
                         }
                     }
+                    maps.add(nodes);
                 }
-                maps.add(nodes);
-            }
-            log.info("-----节点maps---:{}", maps);
-            //存储所有抽取出来的节点
-            for (ConcurrentHashMap<String, Object> map : maps) {
-                // 创建头部节点并动态添加属性
-                Neo4jBuildWrapper<GraphExtractionEntity> wrapper = new Neo4jBuildWrapper<>(GraphExtractionEntity.class);
-                GraphExtractionMergeDO.Node extractionMergeDO = new GraphExtractionMergeDO.Node();
-                extractionMergeDO.setName(map.get("name").toString());
-                extractionMergeDO.setTask_id(graphStructTaskPO.getId());
-                extractionMergeDO.setTable_name(tableName);
-                extractionMergeDO.setData_id(Long.valueOf(map.get("data_id").toString()));
-                extractionMergeDO.setDatabase_id(Long.valueOf(datasource.getId().toString()));
-                Map<String, Object> mergeMap = new ObjectMapper().readValue(JSONObject.toJSONString(extractionMergeDO), Map.class);
-                String label = Neo4jLabelEnum.DYNAMICENTITY.getLabel() + ":" + Neo4jLabelEnum.STRUCTURED.getLabel();
-                graphNeo4jRepository.mergeCreateNode(label, wrapper, mergeMap, map, schemaMappingPO.getConceptName());
-            }
-            //查询映射过的关系
-            GraphRelationMappingPageReqVO relationMappingPageReqVO = new GraphRelationMappingPageReqVO();
-            relationMappingPageReqVO.setTaskId(graphStructTaskPO.getId());
-            relationMappingPageReqVO.setTableName(tableName);
-            List<GraphRelationMappingPO> relationMappingList = graphRelationMappingService.list(relationMappingPageReqVO);
-            //循环映射的关系
-            for (GraphRelationMappingPO relationMappingDO : relationMappingList) {
-                //字段名
-                String fieldName = relationMappingDO.getFieldName();
-                //关联表
-                String relationTable = relationMappingDO.getRelationTable();
-                //关联表字段
-                String relationField = relationMappingDO.getRelationField();
-                // 内连接连表, 查询关系映射
-                String query2 = "SELECT a.*,b.* FROM " + tableName + " a INNER JOIN " + relationTable + " b ON a." + fieldName + " = b." + relationField + ";";
-                log.info("查询sql:{}", query2);
-                List<Map<String, Object>> mapList2 = dbQuery.queryList(query2);
-                log.info("----关系-------:{}", mapList2);
-                //存储节点和关系, 没有关系的节点也存储到neo4j
-                for (Map<String, Object> map : maps) {
+                log.info("-----节点maps---:{}", maps);
+                //存储所有抽取出来的节点
+                for (ConcurrentHashMap<String, Object> map : maps) {
                     // 创建头部节点并动态添加属性
-                    List<Map<String, Object>> filteredList = mapList2.stream()
-                            .filter(m -> m.containsKey("a_id") && m.get("a_id").equals(map.get("data_id")))
-                            .collect(Collectors.toList());
-                    for (Map<String, Object> relMap : filteredList) {
-                        boolean status = false;
-                        //实体的属性 循环匹配是否有对应的关系 //尾部实体
-                        Map<String, Object> endMap = new ConcurrentHashMap<>();
-                        Iterator<Map.Entry<String, Object>> iterator = relMap.entrySet().iterator();
-                        while (iterator.hasNext()) {
-                            ConcurrentHashMap.Entry<String, Object> relEntry = iterator.next();
-                            // 修改或者删除元素
-                            if (relEntry.getKey().startsWith("a_")) {
-                                iterator.remove();  // 使用 iterator 的 remove() 方法
-                            }
-                            //如果是实体id字段, 匹配节点map中的值, 判断是否是同一个, 如果是同一个的话, 判断是否映射的有关系
-                            //根据节点map中的节点data_id和关系映射中的a_id匹配
-                            if ("a_id".equals(relEntry.getKey())) {
-                                //如果是同一个实体 并且b_表的数据不为空, 说明有对应关系存在, 需要存储关系
-                                if (map.get("data_id").equals(relEntry.getValue())) {
-                                    relMap.keySet().removeIf(key -> key.startsWith("a_"));
-                                    // 修改以 "b_" 开头的键，去掉 "b_" 前缀
-                                    Set<String> keysToModify = new HashSet<>();
-                                    for (String key : relMap.keySet()) {
-                                        if (key.startsWith("b_")) {
-                                            keysToModify.add(key);
+                    Neo4jBuildWrapper<GraphExtractionEntity> wrapper = new Neo4jBuildWrapper<>(GraphExtractionEntity.class);
+                    GraphExtractionMergeDO.Node extractionMergeDO = new GraphExtractionMergeDO.Node();
+                    extractionMergeDO.setName(map.get("name").toString());
+                    extractionMergeDO.setTask_id(graphStructTaskPO.getId());
+                    extractionMergeDO.setTable_name(tableName);
+                    extractionMergeDO.setData_id(Long.valueOf(map.get("data_id").toString()));
+                    extractionMergeDO.setDatabase_id(Long.valueOf(datasource.getId().toString()));
+                    Map<String, Object> mergeMap = new ObjectMapper().readValue(JSONObject.toJSONString(extractionMergeDO), Map.class);
+                    String label = Neo4jLabelEnum.DYNAMICENTITY.getLabel() + ":" + Neo4jLabelEnum.STRUCTURED.getLabel();
+                    graphNeo4jRepository.mergeCreateNode(label, wrapper, mergeMap, map, schemaMappingPO.getConceptName());
+                }
+                //查询映射过的关系
+                GraphRelationMappingPageReqVO relationMappingPageReqVO = new GraphRelationMappingPageReqVO();
+                relationMappingPageReqVO.setTaskId(graphStructTaskPO.getId());
+                relationMappingPageReqVO.setTableName(tableName);
+                List<GraphRelationMappingPO> relationMappingList = graphRelationMappingService.list(relationMappingPageReqVO);
+                //循环映射的关系
+                for (GraphRelationMappingPO relationMappingDO : relationMappingList) {
+                    //字段名
+                    String fieldName = relationMappingDO.getFieldName();
+                    //关联表
+                    String relationTable = relationMappingDO.getRelationTable();
+                    //关联表字段
+                    String relationField = relationMappingDO.getRelationField();
+                    // 内连接连表, 查询关系映射
+                    String query2 = "SELECT a.*,b.* FROM " + tableName + " a INNER JOIN " + relationTable + " b ON a." + fieldName + " = b." + relationField + ";";
+                    log.info("查询sql:{}", query2);
+                    List<Map<String, Object>> mapList2 = dbQuery.queryList(query2);
+                    log.info("----关系-------:{}", mapList2);
+                    //存储节点和关系, 没有关系的节点也存储到neo4j
+                    for (Map<String, Object> map : maps) {
+                        // 创建头部节点并动态添加属性
+                        List<Map<String, Object>> filteredList = mapList2.stream()
+                                .filter(m -> m.containsKey("a_id") && m.get("a_id").equals(map.get("data_id")))
+                                .collect(Collectors.toList());
+                        for (Map<String, Object> relMap : filteredList) {
+                            boolean status = false;
+                            //实体的属性 循环匹配是否有对应的关系 //尾部实体
+                            Map<String, Object> endMap = new ConcurrentHashMap<>();
+                            Iterator<Map.Entry<String, Object>> iterator = relMap.entrySet().iterator();
+                            while (iterator.hasNext()) {
+                                ConcurrentHashMap.Entry<String, Object> relEntry = iterator.next();
+                                // 修改或者删除元素
+                                if (relEntry.getKey().startsWith("a_")) {
+                                    iterator.remove();  // 使用 iterator 的 remove() 方法
+                                }
+                                //如果是实体id字段, 匹配节点map中的值, 判断是否是同一个, 如果是同一个的话, 判断是否映射的有关系
+                                //根据节点map中的节点data_id和关系映射中的a_id匹配
+                                if ("a_id".equals(relEntry.getKey())) {
+                                    //如果是同一个实体 并且b_表的数据不为空, 说明有对应关系存在, 需要存储关系
+                                    if (map.get("data_id").equals(relEntry.getValue())) {
+                                        relMap.keySet().removeIf(key -> key.startsWith("a_"));
+                                        // 修改以 "b_" 开头的键，去掉 "b_" 前缀
+                                        Set<String> keysToModify = new HashSet<>();
+                                        for (String key : relMap.keySet()) {
+                                            if (key.startsWith("b_")) {
+                                                keysToModify.add(key);
+                                            }
                                         }
+                                        // 更新键，去掉 "b_" 前缀
+                                        for (String key : keysToModify) {
+                                            Object value = relMap.remove(key);
+                                            // 去掉 "b_" 前缀
+                                            relMap.put(key.substring(2), value);
+                                        }
+                                        endMap = relMap;
+                                        status = true;
                                     }
-                                    // 更新键，去掉 "b_" 前缀
-                                    for (String key : keysToModify) {
-                                        Object value = relMap.remove(key);
-                                        // 去掉 "b_" 前缀
-                                        relMap.put(key.substring(2), value);
-                                    }
-                                    endMap = relMap;
-                                    status = true;
                                 }
                             }
-                        }
-                        //如果有映射的关系, 添加尾部节点和关系
-                        if (status) {
-                            // 创建尾部节点并动态添加属性
-                            endMap.put("task_id", graphStructTaskPO.getId());
-                            endMap.put("table_name", relationTable);
-                            endMap.put("data_id", endMap.get("id"));
-                            endMap.put("database_id", datasource.getId());
-                            endMap.put("release_status", ReleaseStatus.UNPUBLISHED.getValue());
-                            endMap.remove("id");
-                            Neo4jBuildWrapper<GraphExtractionEntity> build = new Neo4jBuildWrapper<>(GraphExtractionEntity.class);
-                            GraphExtractionMergeDO.Node extractionMergeDO = new GraphExtractionMergeDO.Node();
-                            extractionMergeDO.setName(endMap.get(relationMappingDO.getRelationNameField()).toString());
-                            extractionMergeDO.setTask_id(Long.valueOf(graphStructTaskPO.getId().toString()));
-                            extractionMergeDO.setTable_name(relationTable);
-                            extractionMergeDO.setData_id(Long.valueOf(endMap.get("data_id").toString()));
-                            extractionMergeDO.setDatabase_id(Long.valueOf(datasource.getId().toString()));
-                            ConcurrentHashMap<String, Object> endMergeMap = new ObjectMapper().readValue(JSONObject.toJSONString(extractionMergeDO), ConcurrentHashMap.class);
-                            String label = Neo4jLabelEnum.DYNAMICENTITY.getLabel() + ":" + Neo4jLabelEnum.STRUCTURED.getLabel();
-                            graphNeo4jRepository.mergeCreateNode(label, build, endMergeMap, endMap);
-                            //创建关系
-                            //起点
-                            GraphExtractionMergeDO.CreateRelationshipNode startNode = new GraphExtractionMergeDO.CreateRelationshipNode();
-                            startNode.setData_id(Long.valueOf(map.get("data_id").toString()));
-                            startNode.setTask_id(Long.valueOf(graphStructTaskPO.getId().toString()));
-                            startNode.setTable_name(tableName);
-                            ConcurrentHashMap<String, Object> startNodeMap = new ObjectMapper().readValue(JSONObject.toJSONString(startNode), ConcurrentHashMap.class);
-                            //结点
-                            GraphExtractionMergeDO.CreateRelationshipNode endNode = new GraphExtractionMergeDO.CreateRelationshipNode();
-                            endNode.setData_id(Long.valueOf(endMap.get("data_id").toString()));
-                            endNode.setTask_id(Long.valueOf(graphStructTaskPO.getId().toString()));
-                            endNode.setTable_name(relationTable);
-                            ConcurrentHashMap<String, Object> endNodeMap = new ObjectMapper().readValue(JSONObject.toJSONString(endNode), ConcurrentHashMap.class);
-                            String rel = relationMappingDO.getRelation();
-                            //关系
-                            ConcurrentHashMap<String, Object> relMa = new ConcurrentHashMap<>();
-                            relMa.put("task_id", graphStructTaskPO.getId());
-                            graphNeo4jRepository.mergeRelationship(Neo4jLabelEnum.STRUCTURED.getLabel(), build, startNodeMap, endNodeMap, rel, relMa);
+                            //如果有映射的关系, 添加尾部节点和关系
+                            if (status) {
+                                // 创建尾部节点并动态添加属性
+                                endMap.put("task_id", graphStructTaskPO.getId());
+                                endMap.put("table_name", relationTable);
+                                endMap.put("data_id", endMap.get("id"));
+                                endMap.put("database_id", datasource.getId());
+                                endMap.put("release_status", ReleaseStatus.UNPUBLISHED.getValue());
+                                endMap.remove("id");
+                                Neo4jBuildWrapper<GraphExtractionEntity> build = new Neo4jBuildWrapper<>(GraphExtractionEntity.class);
+                                GraphExtractionMergeDO.Node extractionMergeDO = new GraphExtractionMergeDO.Node();
+                                extractionMergeDO.setName(endMap.get(relationMappingDO.getRelationNameField()).toString());
+                                extractionMergeDO.setTask_id(Long.valueOf(graphStructTaskPO.getId().toString()));
+                                extractionMergeDO.setTable_name(relationTable);
+                                extractionMergeDO.setData_id(Long.valueOf(endMap.get("data_id").toString()));
+                                extractionMergeDO.setDatabase_id(Long.valueOf(datasource.getId().toString()));
+                                ConcurrentHashMap<String, Object> endMergeMap = new ObjectMapper().readValue(JSONObject.toJSONString(extractionMergeDO), ConcurrentHashMap.class);
+                                String label = Neo4jLabelEnum.DYNAMICENTITY.getLabel() + ":" + Neo4jLabelEnum.STRUCTURED.getLabel();
+                                graphNeo4jRepository.mergeCreateNode(label, build, endMergeMap, endMap);
+                                //创建关系
+                                //起点
+                                GraphExtractionMergeDO.CreateRelationshipNode startNode = new GraphExtractionMergeDO.CreateRelationshipNode();
+                                startNode.setData_id(Long.valueOf(map.get("data_id").toString()));
+                                startNode.setTask_id(Long.valueOf(graphStructTaskPO.getId().toString()));
+                                startNode.setTable_name(tableName);
+                                ConcurrentHashMap<String, Object> startNodeMap = new ObjectMapper().readValue(JSONObject.toJSONString(startNode), ConcurrentHashMap.class);
+                                //结点
+                                GraphExtractionMergeDO.CreateRelationshipNode endNode = new GraphExtractionMergeDO.CreateRelationshipNode();
+                                endNode.setData_id(Long.valueOf(endMap.get("data_id").toString()));
+                                endNode.setTask_id(Long.valueOf(graphStructTaskPO.getId().toString()));
+                                endNode.setTable_name(relationTable);
+                                ConcurrentHashMap<String, Object> endNodeMap = new ObjectMapper().readValue(JSONObject.toJSONString(endNode), ConcurrentHashMap.class);
+                                String rel = relationMappingDO.getRelation();
+                                //关系
+                                ConcurrentHashMap<String, Object> relMa = new ConcurrentHashMap<>();
+                                relMa.put("task_id", graphStructTaskPO.getId());
+                                graphNeo4jRepository.mergeRelationship(Neo4jLabelEnum.STRUCTURED.getLabel(), build, startNodeMap, endNodeMap, rel, relMa);
+                            }
                         }
                     }
                 }
             }
-        }
+            }
+
+
 
     }
 

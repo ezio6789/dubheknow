@@ -23,7 +23,7 @@ public class GraphStructTaskSaveReqVO extends BaseEntity {
     private String taskName;// 任务名称
     private String remark;// 任务备注
     private Long knowledgeId;// 知识图谱id
-    private Long dataSourceId;// 数据库id
+    private Long datasourceId;// 数据库id
     private List<GraphStructTaskSaveRelationVO.TableData> tableData;// 数据映射表内容
 
     /**

@@ -43,7 +43,7 @@ public abstract class AbstractDbQueryFactory implements DbQuery {
             }
             return dataSource.getConnection();
         } catch (SQLException e) {
-            throw new DataQueryException("获取数据库连接出错");
+            throw new DataQueryException(e.getMessage());
         }
     }
 

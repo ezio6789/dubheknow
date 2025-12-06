@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -85,9 +87,9 @@ public class GraphStructTaskController extends BaseController {
     @Operation(summary = "获取结构化抽取任务详细信息")
     @PreAuthorize("@ss.hasPermi('graph:extract:structtask:query')")
     @GetMapping(value = "/{id}")
-    public CommonResult<GraphStructTaskRespVO> getInfo(@PathVariable("id") Long id) {
-        GraphStructTaskPO graphStructTaskPO = graphStructTaskService.getGraphStructTaskById(id);
-        return CommonResult.success(BeanUtils.toBean(graphStructTaskPO, GraphStructTaskRespVO.class));
+    public CommonResult<Map<String, Object>> getInfo(@PathVariable("id") Long id) {
+        Map<String, Object> map = graphStructTaskService.getInfoTaskById(id);
+        return CommonResult.success(map);
     }
 
     @Operation(summary = "新增结构化抽取任务")

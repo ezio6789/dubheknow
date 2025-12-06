@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.insmess.knowledge.module.graph.dao.po.ontology.GraphAttributeMappingPO;
+import com.insmess.knowledge.module.graph.vo.ontology.GraphAttributeMappingPageReqVO;
 import com.insmess.knowledge.mybatis.core.query.LambdaQueryWrapperX;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
@@ -157,6 +159,13 @@ public class GraphRelationMappingServiceImpl  extends ServiceImpl<GraphRelationM
     @Override
     public List<GraphRelationMappingPO> list(GraphRelationMappingPageReqVO relationMappingPageReqVO) {
         return list(queryCondition(relationMappingPageReqVO));
+    }
+
+    @Override
+    public List<GraphRelationMappingPO> listByTaskId(Long id) {
+        GraphRelationMappingPageReqVO params = new GraphRelationMappingPageReqVO();
+        params.setTaskId(id);
+        return list(params);
     }
 
     private LambdaQueryWrapperX<GraphRelationMappingPO> queryCondition(GraphRelationMappingPageReqVO pageReqVO) {

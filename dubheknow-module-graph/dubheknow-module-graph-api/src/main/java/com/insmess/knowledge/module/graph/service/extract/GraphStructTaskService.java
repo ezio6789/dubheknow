@@ -86,4 +86,12 @@ public interface GraphStructTaskService extends IService<GraphStructTaskPO> {
      * @param taskId 结构化抽取任务编号
      */
     void executeExtract(Long taskId);
+
+    /**
+     * 获取结构化抽取任务详情
+     *
+     * @param id 结构化抽取任务编号
+     * @return 结构化抽取任务详情
+     */
+    Map<String, Object> getInfoTaskById(Long id);
 }

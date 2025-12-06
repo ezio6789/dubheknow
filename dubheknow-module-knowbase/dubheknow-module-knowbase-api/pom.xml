@@ -15,5 +15,9 @@
             <groupId>com.insmess.knowledge</groupId>
             <artifactId>dubheknow-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.insmess.knowledge</groupId>
+            <artifactId>dubheknow-database</artifactId>
+        </dependency>
     </dependencies>
 </project>

@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.Collection;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.insmess.knowledge.common.core.domain.AjaxResult;
+import com.insmess.knowledge.database.core.DbColumn;
+import com.insmess.knowledge.database.core.DbTable;
+import com.insmess.knowledge.module.knowbase.vo.struct.KnowbaseDatasourceColumnQueryVO;
 import com.insmess.knowledge.module.knowbase.vo.struct.KnowbaseDatasourceSaveReqVO;
 import com.insmess.knowledge.module.knowbase.vo.struct.KnowbaseDatasourcePageReqVO;
 import com.insmess.knowledge.module.knowbase.vo.struct.KnowbaseDatasourceRespVO;
@@ -87,4 +89,19 @@ public interface KnowbaseDatasourceService extends IService<KnowbaseDatasourcePO
      * @param id 数据源编号
      */
     void testConnection(Long id);
+
+    /**
+     * 获得数据源表列表
+     *
+     * @param id 数据源编号
+     * @return 数据源表列表
+     */
+    List<DbTable> listTable(Long id);
+
+    /**
+     * 获取列
+     * @param queryVO
+     * @return
+     */
+    List<DbColumn> listColumns(KnowbaseDatasourceColumnQueryVO queryVO);
 }

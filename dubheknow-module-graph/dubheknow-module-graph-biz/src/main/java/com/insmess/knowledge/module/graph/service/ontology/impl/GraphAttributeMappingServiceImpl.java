@@ -159,6 +159,13 @@ public class GraphAttributeMappingServiceImpl  extends ServiceImpl<GraphAttribut
             return resultMsg.toString();
         }
 
+    @Override
+    public List<GraphAttributeMappingPO> listByTaskId(Long id) {
+        GraphAttributeMappingPageReqVO params = new GraphAttributeMappingPageReqVO();
+        params.setTaskId(id);
+        return list(queryCondition(params));
+    }
+
     private LambdaQueryWrapperX<GraphAttributeMappingPO> queryCondition(GraphAttributeMappingPageReqVO pageReqVO) {
         GraphAttributeMappingPO graphAttributeMappingPO = GraphAttributeMappingConvert.INSTANCE.convertToPO(pageReqVO);
         return new LambdaQueryWrapperX<GraphAttributeMappingPO>()

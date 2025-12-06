@@ -87,4 +87,10 @@ public interface GraphAttributeMappingService extends IService<GraphAttributeMap
      */
     String importGraphAttributeMapping(List<GraphAttributeMappingRespVO> importExcelList, boolean isUpdateSupport, String operName);
 
+    /**
+     * 根据任务ID查询属性映射
+     * @param id
+     * @return
+     */
+    List<GraphAttributeMappingPO> listByTaskId(Long id);
 }
