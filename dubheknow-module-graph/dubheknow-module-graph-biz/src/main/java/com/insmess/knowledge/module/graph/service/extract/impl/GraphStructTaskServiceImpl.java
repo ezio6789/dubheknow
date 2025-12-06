@@ -92,6 +92,11 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
         GraphStructTaskPO graphStructTaskPO = GraphStructTaskConvert.INSTANCE.convertToPO(saveReqVO);
         graphStructTaskPO.setName(saveReqVO.getTaskName());
         graphStructTaskMapper.insert(graphStructTaskPO);
+        saveMapping(saveReqVO, graphStructTaskPO);
+        return graphStructTaskPO.getId();
+    }
+
+    private void saveMapping(GraphStructTaskSaveReqVO saveReqVO, GraphStructTaskPO graphStructTaskPO) {
         //添加映射关系
         List<GraphStructTaskSaveRelationVO.TableData> tableDatas = saveReqVO.getTableData();
         for (GraphStructTaskSaveRelationVO.TableData tableData : tableDatas) {
@@ -159,12 +164,19 @@ public class GraphStructTaskServiceImpl  extends ServiceImpl<GraphStructTaskMapp
             }
             graphStructTaskRelationMappingService.saveBatch(relationMappingPOS);
         }
-        return graphStructTaskPO.getId();
     }
 
     @Override
     public int updateGraphStructTask(GraphStructTaskSaveReqVO updateReqVO) {
         GraphStructTaskPO updateObj = GraphStructTaskConvert.INSTANCE.convertToPO(updateReqVO);
+        updateObj.setName(updateReqVO.getTaskName());
+        updateObj.setId(updateReqVO.getTaskId());
+        graphStructTaskMapper.updateById(updateObj);
+        //删除之前的映射关系
+        graphStructTaskConceptMappingService.remove(new QueryWrapper<GraphStructTaskConceptMappingPO>().lambda().eq(GraphStructTaskConceptMappingPO::getTaskId, updateReqVO.getTaskId()));
+        graphStructTaskAttributeMappingService.remove(new QueryWrapper<GraphStructTaskAttributeMappingPO>().lambda().eq(GraphStructTaskAttributeMappingPO::getTaskId, updateReqVO.getTaskId()));
+        graphStructTaskRelationMappingService.remove(new QueryWrapper<GraphStructTaskRelationMappingPO>().lambda().eq(GraphStructTaskRelationMappingPO::getTaskId, updateReqVO.getTaskId()));
+        saveMapping(updateReqVO, updateObj);
         return graphStructTaskMapper.updateById(updateObj);
     }
     @Override

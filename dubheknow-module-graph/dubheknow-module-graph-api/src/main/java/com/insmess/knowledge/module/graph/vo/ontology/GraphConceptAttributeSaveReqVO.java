@@ -52,7 +52,6 @@ public class GraphConceptAttributeSaveReqVO extends BaseEntity {
     private String multipleFlag;
 
     @Schema(description = "校验方式", example = "")
-    @NotBlank(message = "校验方式不能为空")
     private String validateType;
 
     @Schema(description = "最小值", example = "")
@@ -62,7 +61,6 @@ public class GraphConceptAttributeSaveReqVO extends BaseEntity {
     private Long maxValue;
 
     @Schema(description = "备注", example = "")
-    @NotBlank(message = "备注不能为空")
     @Size(max = 512, message = "备注长度不能超过512个字符")
     private String remark;
 

@@ -61,7 +61,7 @@ public abstract class AbstractDbQueryFactory implements DbQuery {
             }
             return conn.isValid(0);
         } catch (SQLException e) {
-            throw new DataQueryException("检测连通性出错");
+            throw new DataQueryException("检测连通性出错：" + e.getMessage());
         } finally {
             if (conn != null) {
                 try {

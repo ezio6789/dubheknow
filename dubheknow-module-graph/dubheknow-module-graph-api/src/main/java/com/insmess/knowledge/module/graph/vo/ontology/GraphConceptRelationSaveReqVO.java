@@ -40,7 +40,6 @@ public class GraphConceptRelationSaveReqVO extends BaseEntity {
     private Integer inverseFlag;
 
     @Schema(description = "备注", example = "")
-    @NotBlank(message = "备注不能为空")
     @Size(max = 512, message = "备注长度不能超过512个字符")
     private String remark;
 

@@ -144,65 +144,41 @@ public class Neo4jBuildWrapper<T> {
         }
         if (attributeMap.size() > 0) {
             query.append(" SET n += {");
-            // 遍历 attributeMap，构建属性列表
-            StringBuilder attributes = new StringBuilder();
-            //单独拼接一次name
+            List<String> attributes = new ArrayList<>();
             String nameKey = "name";
             if (attributeMap.containsKey(nameKey)) {
                 Object value = attributeMap.get(nameKey);
-                // 用于存储格式化后的值
                 String valueString;
-                // 判断值的类型并格式化
                 if (value instanceof String) {
-                    // 对于 String 类型，添加单引号
                     valueString = "'" + value + "'";
                 } else if (value instanceof Number || value instanceof Boolean) {
-                    // 对于 Number 和 Boolean 类型，直接使用其 toString() 结果，不需要引号
                     valueString = value.toString();
                 } else if (value == null) {
-                    // 对于 null 值，处理成 "null"
                     valueString = "null";
                 } else {
-                    // 对于其他类型，调用 toString() 获取其字符串表示
-                    valueString = "'" + value + "'";;
+                    valueString = "'" + value + "'";
                 }
-                // 为每个属性对生成格式化的 key: 'value' 字符串，并加入到 attributes 中
-                attributes.append(", ");  // 每个属性对之间添加逗号
-                // 拼接属性字符串
-                attributes.append(nameKey + ": " + valueString);
+                attributes.add(nameKey + ": " + valueString);
             }
             for (Map.Entry<String, Object> entry : attributeMap.entrySet()) {
-                // 获取键和值
                 String key = entry.getKey();
                 Object value = entry.getValue();
-                // 用于存储格式化后的值
                 String valueString;
-                // 判断值的类型并格式化
                 if (value instanceof String) {
-                    // 对于 String 类型，添加单引号
                     valueString = "'" + value + "'";
                 } else if (value instanceof Number || value instanceof Boolean) {
-                    // 对于 Number 和 Boolean 类型，直接使用其 toString() 结果，不需要引号
                     valueString = value.toString();
                 } else if (value == null) {
-                    // 对于 null 值，处理成 "null"
                     valueString = "null";
                 } else {
-                    // 对于其他类型，调用 toString() 获取其字符串表示
-                    valueString = "'" + value + "'";;
+                    valueString = "'" + value + "'";
                 }
-                // 为每个属性对生成格式化的 key: 'value' 字符串，并加入到 attributes 中
-                if (attributes.length() > 0) {
-                    attributes.append(", ");  // 每个属性对之间添加逗号
-                }
-                // 拼接属性字符串
-                attributes.append(prefixName + key + ": " + valueString);
+                attributes.add(prefixName + key + ": " + valueString);
             }
 
-
-            query.append(attributes);
+            query.append(String.join(", ", attributes));
             query.append("}");
-            //如果不是空
+            //如果不是
             if (StrUtil.isNotBlank(newLabel)) {
                 query.append(" SET n:").append(newLabel);
             }
